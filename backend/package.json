@@ -1,0 +1,14 @@
+{
+  "name": "maidease-backend",
+  "version": "1.0.0",
+  "description": "Backend API for MaidEase Live real-time home maid booking and calling platform",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}

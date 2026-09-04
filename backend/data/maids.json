@@ -1,0 +1,392 @@
+[
+  {
+    "id": "maid_1",
+    "name": "Sunita Devi",
+    "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80",
+    "tagline": "Master Cook (North & South Indian) + Hygienic Kitchen Management",
+    "status": "available",
+    "etaMins": 20,
+    "busyUntil": null,
+    "rating": 4.9,
+    "reviewCount": 184,
+    "experienceYears": 7,
+    "location": "Sector 45, Near Cyber Hub",
+    "distanceKm": 1.4,
+    "phone": "+91 98234 11201",
+    "whatsapp": "919823411201",
+    "services": [
+      "Cooking",
+      "Dishwashing",
+      "Deep Cleaning"
+    ],
+    "specialties": [
+      "Pure Veg & Non-Veg",
+      "Phulka Rotis & Curries",
+      "Healthy Diet Meals",
+      "Quick 30-min Prep"
+    ],
+    "languages": [
+      "Hindi",
+      "English",
+      "Punjabi"
+    ],
+    "verified": {
+      "police": true,
+      "aadhaar": true,
+      "medical": true,
+      "background": true
+    },
+    "pricing": {
+      "hourlyRate": 180,
+      "oneTimeVisit": 349,
+      "monthlyEstimate": 3500,
+      "perChore": {
+        "cooking": 1600,
+        "cleaning": 1100,
+        "dishwashing": 800,
+        "dusting": 600
+      }
+    },
+    "availabilitySlots": [
+      "Instant Callout (Now)",
+      "Morning (7:00 AM - 11:00 AM)",
+      "Evening (5:00 PM - 8:30 PM)"
+    ],
+    "bio": "Experienced home chef with 7+ years serving families and working professionals. Specializes in hygienic food preparation, multiple cuisines, and managing kitchen cleanliness.",
+    "recentReviews": [
+      {
+        "author": "Ananya Roy",
+        "rating": 5,
+        "date": "Yesterday",
+        "comment": "Sunita ji reached our home in exactly 20 minutes! Cooked delicious dinner for 4 guests without any hassle. Highly recommended!"
+      },
+      {
+        "author": "Vikram Malhotra",
+        "rating": 5,
+        "date": "3 days ago",
+        "comment": "Very polite and hygienic. Her rotis and dal tadka are restaurant quality."
+      }
+    ]
+  },
+  {
+    "id": "maid_2",
+    "name": "Laxmi Shinde",
+    "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80",
+    "tagline": "All-Rounder House Helper (Deep Sweeping, Mopping & Utensil Care)",
+    "status": "available",
+    "etaMins": 15,
+    "busyUntil": null,
+    "rating": 4.8,
+    "reviewCount": 142,
+    "experienceYears": 5,
+    "location": "Green Glen Layout, Block B",
+    "distanceKm": 0.8,
+    "phone": "+91 98112 33452",
+    "whatsapp": "919811233452",
+    "services": [
+      "Deep Cleaning",
+      "Dishwashing",
+      "Laundry",
+      "Dusting"
+    ],
+    "specialties": [
+      "Bathroom Disinfection",
+      "Sparkling Bartan Clean",
+      "Floor Stain Removal",
+      "Wardrobe Organizing"
+    ],
+    "languages": [
+      "Hindi",
+      "Marathi",
+      "Kannada"
+    ],
+    "verified": {
+      "police": true,
+      "aadhaar": true,
+      "medical": true,
+      "background": true
+    },
+    "pricing": {
+      "hourlyRate": 140,
+      "oneTimeVisit": 279,
+      "monthlyEstimate": 2800,
+      "perChore": {
+        "cleaning": 1000,
+        "dishwashing": 700,
+        "laundry": 600,
+        "dusting": 500
+      }
+    },
+    "availabilitySlots": [
+      "Instant Callout (Now)",
+      "Full Day (8:00 AM - 6:00 PM)",
+      "Evening Slot"
+    ],
+    "bio": "Meticulous and punctual domestic helper. Expert in deep floor scrubbing, bathroom tile washing, utensil sanitization, and laundry folding.",
+    "recentReviews": [
+      {
+        "author": "Priya Sharma",
+        "rating": 5,
+        "date": "2 days ago",
+        "comment": "Super clean work! Reached within 15 minutes of my urgent call. Will book monthly!"
+      },
+      {
+        "author": "Rohit Verma",
+        "rating": 4.5,
+        "date": "1 week ago",
+        "comment": "Laxmi did entire 3 BHK cleaning in 1.5 hours. Very honest and hardworking."
+      }
+    ]
+  },
+  {
+    "id": "maid_3",
+    "name": "Pooja Kumari",
+    "avatar": "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=300&auto=format&fit=crop&q=80",
+    "tagline": "Certified Nanny & Baby Care Specialist + Child Routine Management",
+    "status": "busy",
+    "etaMins": 45,
+    "busyUntil": "3:30 PM",
+    "rating": 4.95,
+    "reviewCount": 98,
+    "experienceYears": 6,
+    "location": "Indiranagar 100ft Road",
+    "distanceKm": 2.6,
+    "phone": "+91 97231 99081",
+    "whatsapp": "919723199081",
+    "services": [
+      "Babysitting",
+      "Child Care",
+      "Light Cooking",
+      "Kids Laundry"
+    ],
+    "specialties": [
+      "Toddler Engagement",
+      "Infant Feeding & Hygiene",
+      "First Aid Certified",
+      "Bedtime Routine"
+    ],
+    "languages": [
+      "Hindi",
+      "English",
+      "Bhojpuri"
+    ],
+    "verified": {
+      "police": true,
+      "aadhaar": true,
+      "medical": true,
+      "background": true
+    },
+    "pricing": {
+      "hourlyRate": 250,
+      "oneTimeVisit": 499,
+      "monthlyEstimate": 6500,
+      "perChore": {
+        "babysitting": 3000,
+        "cooking": 1200,
+        "childCare": 2500
+      }
+    },
+    "availabilitySlots": [
+      "Available After 3:30 PM",
+      "Night Babysitting",
+      "Full Day (8 AM - 7 PM)"
+    ],
+    "bio": "Certified child caregiver with background checks and nursery assistance experience. Trusted by 50+ working parents for gentle, attentive infant & toddler care.",
+    "recentReviews": [
+      {
+        "author": "Dr. Sneha Pillai",
+        "rating": 5,
+        "date": "Yesterday",
+        "comment": "Pooja is wonderful with our 2-year-old daughter. Extremely trustworthy and caring."
+      }
+    ]
+  },
+  {
+    "id": "maid_4",
+    "name": "Anita Devi",
+    "avatar": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&auto=format&fit=crop&q=80",
+    "tagline": "Elderly Care Companion & Patient Home Assistant",
+    "status": "available",
+    "etaMins": 25,
+    "busyUntil": null,
+    "rating": 4.85,
+    "reviewCount": 116,
+    "experienceYears": 8,
+    "location": "Koramangala 4th Block",
+    "distanceKm": 1.9,
+    "phone": "+91 98450 77123",
+    "whatsapp": "919845077123",
+    "services": [
+      "Elderly Care",
+      "Cooking",
+      "Medicine Tracking",
+      "Light Housekeeping"
+    ],
+    "specialties": [
+      "Mobility Assistance",
+      "BP & Sugar Log Support",
+      "Soft Diet Cooking",
+      "Compassionate Listening"
+    ],
+    "languages": [
+      "Hindi",
+      "Telugu",
+      "Tamil",
+      "English"
+    ],
+    "verified": {
+      "police": true,
+      "aadhaar": true,
+      "medical": true,
+      "background": true
+    },
+    "pricing": {
+      "hourlyRate": 220,
+      "oneTimeVisit": 450,
+      "monthlyEstimate": 5800,
+      "perChore": {
+        "elderlyCare": 3500,
+        "cooking": 1400,
+        "cleaning": 900
+      }
+    },
+    "availabilitySlots": [
+      "Instant Callout (Now)",
+      "Morning + Evening Slots",
+      "12-Hour Shift"
+    ],
+    "bio": "Dedicated senior citizen caregiver with nursing assistant training. Helps elders with daily walks, meals, medicine reminders, and companionship.",
+    "recentReviews": [
+      {
+        "author": "Karthik Nambiar",
+        "rating": 5,
+        "date": "4 days ago",
+        "comment": "Anita ji took utmost care of my elderly father. Very patient and respectful."
+      }
+    ]
+  },
+  {
+    "id": "maid_5",
+    "name": "Meena Bai",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+    "tagline": "Express Cleaning & Utensil Washing (Quick 45-Min Visit)",
+    "status": "offline",
+    "etaMins": 0,
+    "busyUntil": "Tomorrow 7:00 AM",
+    "rating": 4.7,
+    "reviewCount": 78,
+    "experienceYears": 4,
+    "location": "Whitefield Main Road",
+    "distanceKm": 3.8,
+    "phone": "+91 99120 44510",
+    "whatsapp": "919912044510",
+    "services": [
+      "Dishwashing",
+      "Deep Cleaning",
+      "Dusting"
+    ],
+    "specialties": [
+      "Emergency Post-Party Clean",
+      "Kitchen Sink Clearing",
+      "Balcony Wash"
+    ],
+    "languages": [
+      "Hindi",
+      "Kannada"
+    ],
+    "verified": {
+      "police": true,
+      "aadhaar": true,
+      "medical": true,
+      "background": true
+    },
+    "pricing": {
+      "hourlyRate": 130,
+      "oneTimeVisit": 249,
+      "monthlyEstimate": 2500,
+      "perChore": {
+        "dishwashing": 700,
+        "cleaning": 900,
+        "dusting": 500
+      }
+    },
+    "availabilitySlots": [
+      "Early Morning (6:30 AM - 10:00 AM)",
+      "Afternoon (1:00 PM - 4:00 PM)"
+    ],
+    "bio": "Quick and reliable maid specializing in rapid utensil washing and floor sanitizing. Excellent for busy bachelors and joint families.",
+    "recentReviews": [
+      {
+        "author": "Aditya Joshi",
+        "rating": 4.5,
+        "date": "Last week",
+        "comment": "Cleaned up all party utensils in 40 minutes flat. Great value!"
+      }
+    ]
+  },
+  {
+    "id": "maid_6",
+    "name": "Rekha Verma",
+    "avatar": "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=300&auto=format&fit=crop&q=80",
+    "tagline": "Full-Service Housekeeper (Cooking + 3 BHK Deep Clean + Ironing)",
+    "status": "available",
+    "etaMins": 18,
+    "busyUntil": null,
+    "rating": 4.9,
+    "reviewCount": 210,
+    "experienceYears": 9,
+    "location": "HSR Layout Sector 2",
+    "distanceKm": 1.1,
+    "phone": "+91 97761 22890",
+    "whatsapp": "919776122890",
+    "services": [
+      "Cooking",
+      "Deep Cleaning",
+      "Laundry",
+      "Dishwashing",
+      "Dusting"
+    ],
+    "specialties": [
+      "Continental & Indian Dishes",
+      "Steam Ironing",
+      "Pantry Organization",
+      "Sanitized Deep Scrub"
+    ],
+    "languages": [
+      "Hindi",
+      "English",
+      "Bengali"
+    ],
+    "verified": {
+      "police": true,
+      "aadhaar": true,
+      "medical": true,
+      "background": true
+    },
+    "pricing": {
+      "hourlyRate": 200,
+      "oneTimeVisit": 399,
+      "monthlyEstimate": 4200,
+      "perChore": {
+        "cooking": 1800,
+        "cleaning": 1200,
+        "laundry": 700,
+        "dishwashing": 800
+      }
+    },
+    "availabilitySlots": [
+      "Instant Callout (Now)",
+      "Morning Slot",
+      "Evening Slot"
+    ],
+    "bio": "Experienced multi-tasker and cook with 9 years across luxury apartments. Verified credentials and punctual service with stellar client track record.",
+    "recentReviews": [
+      {
+        "author": "Shalini Gupta",
+        "rating": 5,
+        "date": "Today",
+        "comment": "Rekha is simply the best! She came in 18 minutes, made breakfast, and cleaned the entire hall and kitchen impeccably."
+      }
+    ]
+  }
+]
