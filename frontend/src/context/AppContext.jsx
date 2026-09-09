@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
+import { realtime } from '../services/realtime';
 
 const AppContext = createContext();
 
@@ -9,6 +10,7 @@ export function AppProvider({ children }) {
   const [availableCount, setAvailableCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
 
   // Modals & Active Selectors
   const [selectedMaidForCall, setSelectedMaidForCall] = useState(null);
@@ -16,7 +18,11 @@ export function AppProvider({ children }) {
   const [selectedMaidForProfile, setSelectedMaidForProfile] = useState(null);
   const [isPriceCalculatorOpen, setIsPriceCalculatorOpen] = useState(false);
   const [isBookingTrackerOpen, setIsBookingTrackerOpen] = useState(false);
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const [activePartnerMaidId, setActivePartnerMaidId] = useState('maid_1'); // Sunita Devi
+
+  // Live Real-Time Telemetry & GPS State
+  const [liveGpsData, setLiveGpsData] = useState({});
 
   // Filters
   const [filters, setFilters] = useState({
@@ -38,7 +44,7 @@ export function AppProvider({ children }) {
     setToast({ message, type, id: Date.now() });
     setTimeout(() => {
       setToast(null);
-    }, 4000);
+    }, 4500);
   };
 
   // Load maids
@@ -70,15 +76,49 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  // Initial & Auto refresh polling
+  // Initial Load & Real-Time Event Subscription
   useEffect(() => {
     loadMaids();
     loadBookings();
-    const interval = setInterval(() => {
+
+    // Start Real-Time SSE Stream
+    realtime.connect();
+
+    const unsubConn = realtime.on('connection_status', ({ connected }) => {
+      setIsRealtimeConnected(connected);
+    });
+
+    const unsubBookingCreated = realtime.on('booking_created', (newBooking) => {
+      setBookings(prev => [newBooking, ...prev.filter(b => b.id !== newBooking.id)]);
+      realtime.playChime('booking');
+      showToast(`🔔 Real-Time Alert: New booking dispatch #${newBooking.id} for ${newBooking.maidName}!`, 'success');
       loadMaids();
-      loadBookings();
-    }, 8000); // 8-second live sync
-    return () => clearInterval(interval);
+    });
+
+    const unsubBookingUpdated = realtime.on('booking_updated', (updatedBooking) => {
+      setBookings(prev => prev.map(b => b.id === updatedBooking.id ? updatedBooking : b));
+      showToast(`⚡ Booking #${updatedBooking.id} status updated to ${updatedBooking.status.toUpperCase()}`, 'info');
+      loadMaids();
+    });
+
+    const unsubMaidStatus = realtime.on('maid_status_change', ({ maidId, status, maid }) => {
+      setMaids(prev => prev.map(m => m.id === maidId ? { ...m, status, ...maid } : m));
+      realtime.playChime('notification');
+    });
+
+    const unsubGps = realtime.on('maid_location_update', (gps) => {
+      setLiveGpsData(prev => ({ ...prev, [gps.bookingId]: gps }));
+      // Also update etaRemainingMins in bookings if matches
+      setBookings(prev => prev.map(b => b.id === gps.bookingId ? { ...b, etaRemainingMins: gps.etaRemainingMins, status: gps.status } : b));
+    });
+
+    return () => {
+      unsubConn();
+      unsubBookingCreated();
+      unsubBookingUpdated();
+      unsubMaidStatus();
+      unsubGps();
+    };
   }, [loadMaids, loadBookings]);
 
   // Handle maid status toggle (from partner mode)
@@ -86,8 +126,7 @@ export function AppProvider({ children }) {
     try {
       const res = await api.updateMaidStatus(maidId, { status: newStatus, busyUntil, etaMins });
       if (res.success) {
-        showToast(`Status updated to ${newStatus.toUpperCase()}!`, 'success');
-        loadMaids();
+        showToast(`Maid Status set to ${newStatus.toUpperCase()}!`, 'success');
       }
     } catch (err) {
       showToast('Failed to update status', 'error');
@@ -99,9 +138,7 @@ export function AppProvider({ children }) {
     try {
       const res = await api.createBooking(bookingPayload);
       if (res.success) {
-        showToast('🎉 Maid Booked! Helper is notified and preparing to arrive.', 'success');
-        loadBookings();
-        loadMaids();
+        showToast('🎉 Maid Booked! Real-time dispatch is active.', 'success');
         setIsBookingTrackerOpen(true);
         setSelectedMaidForBooking(null);
         return res.booking;
@@ -121,11 +158,13 @@ export function AppProvider({ children }) {
         availableCount,
         loading,
         error,
+        isRealtimeConnected,
         filters,
         setFilters,
         loadMaids,
         bookings,
         loadBookings,
+        liveGpsData,
         callLogs,
         setCallLogs,
         selectedMaidForCall,
@@ -138,6 +177,8 @@ export function AppProvider({ children }) {
         setIsPriceCalculatorOpen,
         isBookingTrackerOpen,
         setIsBookingTrackerOpen,
+        isAIAssistantOpen,
+        setIsAIAssistantOpen,
         activePartnerMaidId,
         setActivePartnerMaidId,
         toggleMaidStatus,

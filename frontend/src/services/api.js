@@ -100,5 +100,27 @@ export const api = {
     const res = await fetch(`${API_BASE}/calls`);
     if (!res.ok) throw new Error('Failed to get call logs');
     return res.json();
+  },
+
+  // AI Agent 1: Natural Language Requirement Matcher
+  async matchAIAgent(prompt) {
+    const res = await fetch(`${API_BASE}/ai/agent-match`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    if (!res.ok) throw new Error('Failed to process AI agent request');
+    return res.json();
+  },
+
+  // AI Agent 2: Call Voice Persona Spoken Reply
+  async getAICallReply(data) {
+    const res = await fetch(`${API_BASE}/ai/call-voice-reply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to get AI call voice reply');
+    return res.json();
   }
 };

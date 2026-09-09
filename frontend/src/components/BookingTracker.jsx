@@ -3,19 +3,30 @@ import { useApp } from '../context/AppContext';
 import { api } from '../services/api';
 import { 
   Clock, MapPin, PhoneCall, ShieldCheck, CheckCircle2, AlertTriangle, 
-  X, Navigation, UserCheck, Sparkles, MessageSquare 
+  X, Navigation, UserCheck, Sparkles, MessageSquare, KeyRound, 
+  Radio, Compass, Gauge, MessageCircle, ExternalLink
 } from 'lucide-react';
 
 const STATUS_STEPS = [
   { key: 'requested', label: 'Requested', desc: 'Booking received by system' },
   { key: 'accepted', label: 'Accepted', desc: 'Maid confirmed visit' },
   { key: 'en_route', label: 'En Route', desc: 'Heading to your doorstep' },
+  { key: 'arrived', label: 'Arrived', desc: 'Helper at your door / gate' },
   { key: 'in_progress', label: 'In Progress', desc: 'Working at your home' },
   { key: 'completed', label: 'Completed', desc: 'Task verified & completed' }
 ];
 
 export default function BookingTracker() {
-  const { isBookingTrackerOpen, setIsBookingTrackerOpen, bookings, loadBookings, showToast, setSelectedMaidForCall, maids } = useApp();
+  const { 
+    isBookingTrackerOpen, 
+    setIsBookingTrackerOpen, 
+    bookings, 
+    loadBookings, 
+    showToast, 
+    setSelectedMaidForCall, 
+    maids,
+    liveGpsData 
+  } = useApp();
 
   if (!isBookingTrackerOpen) return null;
 
@@ -35,37 +46,44 @@ export default function BookingTracker() {
     const targetMaid = maids.find(m => m.id === maidId) || {
       id: maidId,
       name: "Assigned Helper",
-      phone: "+91 98765 43210",
+      phone: "+91 98234 11201",
+      whatsapp: "919823411201",
       avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300"
     };
     setSelectedMaidForCall(targetMaid);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-3xl glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl overflow-y-auto max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
+      <div className="relative w-full max-w-3xl glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl overflow-y-auto max-h-[90vh] text-slate-100">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-              <Clock className="w-6 h-6" />
+            <div className="p-2.5 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-lg shadow-cyan-500/10">
+              <Compass className="w-6 h-6 animate-spin-slow" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-black font-heading text-white">
-                Live Doorstep Booking Tracker
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-black font-heading text-white">
+                  Live Doorstep GPS Tracker
+                </h2>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold uppercase flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  Real-Time Active
+                </span>
+              </div>
               <p className="text-xs text-slate-400">
-                Real-time dispatch status, ETA updates & emergency safety hotline
+                Live location telemetry, countdown ETA & secure doorstep OTP verification
               </p>
             </div>
           </div>
 
           <button
             onClick={() => setIsBookingTrackerOpen(false)}
-            className="p-1.5 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -80,12 +98,20 @@ export default function BookingTracker() {
           ) : (
             bookings.map((b) => {
               const currentStepIndex = STATUS_STEPS.findIndex(s => s.key === b.status);
+              const gps = liveGpsData[b.id];
+              const remainingEta = gps ? gps.etaRemainingMins : (b.etaRemainingMins || 18);
+              const isMoving = b.status === 'en_route' || b.status === 'accepted';
 
               return (
                 <div
                   key={b.id}
-                  className="p-5 sm:p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-5 shadow-xl"
+                  className="p-5 sm:p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-5 shadow-2xl relative overflow-hidden"
                 >
+                  {/* Subtle Top Glow depending on state */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 ${
+                    b.status === 'completed' ? 'bg-emerald-500' : 'bg-gradient-to-r from-cyan-500 via-emerald-500 to-indigo-500'
+                  }`} />
+
                   {/* Top Details & ID */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
                     <div>
@@ -98,12 +124,12 @@ export default function BookingTracker() {
                         </span>
                       </div>
                       <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-                        <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                        <MapPin className="w-3.5 h-3.5 text-rose-400" />
                         <span>{b.address}</span>
                       </div>
                     </div>
 
-                    <div className="text-right">
+                    <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start">
                       <div className="text-xs text-slate-400">Total Payable</div>
                       <div className="text-lg font-black font-heading text-emerald-400">
                         ₹{b.totalAmount} <span className="text-[11px] text-slate-400 font-normal">({b.paymentMethod})</span>
@@ -111,45 +137,129 @@ export default function BookingTracker() {
                     </div>
                   </div>
 
-                  {/* Assigned Maid Contact Strip */}
-                  <div className="flex items-center justify-between bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">
-                        <UserCheck className="w-5 h-5" />
+                  {/* Simulated Live GPS Map Visualizer */}
+                  {isMoving && (
+                    <div className="p-4 rounded-2xl bg-slate-950/80 border border-cyan-500/30 relative overflow-hidden">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Navigation className="w-4 h-4 text-cyan-400 animate-pulse" />
+                          <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Live GPS Dispatch Radar</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs">
+                          <span className="flex items-center gap-1 text-slate-400">
+                            <Gauge className="w-3.5 h-3.5 text-amber-400" />
+                            <span>{gps?.speedKmH || 24} km/h</span>
+                          </span>
+                          <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-bold">
+                            ETA: {remainingEta} mins
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <div className="text-xs text-slate-400">Assigned Domestic Helper</div>
-                        <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                          <span>{b.maidName}</span>
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+
+                      {/* Map Graphic Canvas */}
+                      <div className="relative h-28 bg-slate-900/90 rounded-xl border border-slate-800 flex items-center justify-between px-8 overflow-hidden">
+                        {/* Road Line */}
+                        <div className="absolute left-10 right-10 top-1/2 h-1 bg-slate-800 -translate-y-1/2 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all duration-1000"
+                            style={{ width: `${Math.min(100, Math.max(10, (1 - remainingEta / 20) * 100))}%` }}
+                          />
+                        </div>
+
+                        {/* Maid Origin / Current Marker */}
+                        <div className="z-10 flex flex-col items-center">
+                          <div className="w-10 h-10 rounded-2xl bg-cyan-500 text-slate-950 flex items-center justify-center font-bold shadow-lg shadow-cyan-500/30 animate-bounce">
+                            🚗
+                          </div>
+                          <span className="text-[10px] font-bold text-cyan-300 mt-1">{b.maidName}</span>
+                          <span className="text-[9px] text-slate-400 font-mono">
+                            {gps ? `${gps.lat}, ${gps.lng}` : '12.9716, 77.6412'}
+                          </span>
+                        </div>
+
+                        {/* Customer Doorstep Destination */}
+                        <div className="z-10 flex flex-col items-center">
+                          <div className="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center font-bold shadow-lg shadow-rose-500/30">
+                            🏠
+                          </div>
+                          <span className="text-[10px] font-bold text-rose-300 mt-1">Your Doorstep</span>
+                          <span className="text-[9px] text-slate-400 font-mono">12.9784, 77.6408</span>
                         </div>
                       </div>
                     </div>
+                  )}
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleCallMaid(b.maidId)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/20"
-                      >
-                        <PhoneCall className="w-3.5 h-3.5 animate-pulse" />
-                        <span>Call Maid</span>
-                      </button>
+                  {/* Assigned Maid Contact Strip & Doorstep OTP */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    
+                    {/* Maid Info */}
+                    <div className="flex items-center justify-between bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={b.maidAvatar || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300"} 
+                          alt={b.maidName} 
+                          className="w-11 h-11 rounded-2xl object-cover border border-emerald-500/40"
+                        />
+                        <div>
+                          <div className="text-[11px] text-slate-400">Assigned Helper</div>
+                          <div className="text-sm font-bold text-white flex items-center gap-1">
+                            <span>{b.maidName}</span>
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                          </div>
+                          <div className="text-[11px] text-slate-400">{b.maidPhone}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => handleCallMaid(b.maidId)}
+                          className="p-2.5 rounded-xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition shadow-md shadow-emerald-500/20"
+                          title="Call Maid"
+                        >
+                          <PhoneCall className="w-4 h-4" />
+                        </button>
+                        <a
+                          href={`https://wa.me/${b.maidPhone?.replace(/[^0-9]/g, '')}?text=Namaste%20${encodeURIComponent(b.maidName)}%20ji,%20Booking%20ID%20${b.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2.5 rounded-xl bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-600/40 transition"
+                          title="WhatsApp Maid"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </a>
+                      </div>
                     </div>
+
+                    {/* Doorstep Verification OTP */}
+                    <div className="flex items-center justify-between bg-emerald-950/30 p-3.5 rounded-2xl border border-emerald-500/30">
+                      <div className="flex items-center gap-2.5">
+                        <KeyRound className="w-5 h-5 text-emerald-400" />
+                        <div>
+                          <div className="text-[11px] text-emerald-300 font-semibold">Doorstep Start OTP</div>
+                          <div className="text-[10px] text-slate-400">Share with maid on arrival</div>
+                        </div>
+                      </div>
+
+                      <div className="text-2xl font-black font-mono tracking-widest text-emerald-400 px-3 py-1 rounded-xl bg-slate-950/80 border border-emerald-500/40">
+                        {b.otp || '4829'}
+                      </div>
+                    </div>
+
                   </div>
 
                   {/* Live Progress Stepper */}
                   <div>
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
-                      <span>Dispatch Status Progress</span>
-                      {b.status === 'en_route' && (
-                        <span className="text-emerald-400 font-semibold animate-pulse flex items-center gap-1">
-                          <Navigation className="w-3.5 h-3.5" />
-                          <span>ETA: ~12 Mins Remaining</span>
+                      <span>Live Dispatch Pipeline</span>
+                      {b.status === 'arrived' && (
+                        <span className="text-emerald-400 font-bold animate-pulse flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Maid Arrived at Doorstep!</span>
                         </span>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-5 gap-1.5 text-center">
+                    <div className="grid grid-cols-6 gap-1 text-center">
                       {STATUS_STEPS.map((step, idx) => {
                         const isPast = idx <= currentStepIndex;
                         const isCurrent = idx === currentStepIndex;
@@ -157,7 +267,7 @@ export default function BookingTracker() {
                         return (
                           <div key={step.key} className="flex flex-col items-center">
                             <div
-                              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border transition-all ${
+                              className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold border transition ${
                                 isCurrent
                                   ? 'bg-emerald-500 text-slate-950 border-emerald-300 ring-4 ring-emerald-500/20'
                                   : isPast
@@ -167,7 +277,9 @@ export default function BookingTracker() {
                             >
                               {idx + 1}
                             </div>
-                            <span className={`text-[11px] font-bold mt-1.5 ${isCurrent ? 'text-emerald-300' : isPast ? 'text-slate-200' : 'text-slate-500'}`}>
+                            <span className={`text-[10px] sm:text-[11px] font-bold mt-1.5 truncate max-w-full ${
+                              isCurrent ? 'text-emerald-300' : isPast ? 'text-slate-200' : 'text-slate-500'
+                            }`}>
                               {step.label}
                             </span>
                           </div>
@@ -176,27 +288,33 @@ export default function BookingTracker() {
                     </div>
                   </div>
 
-                  {/* Quick Simulation Progress Buttons */}
+                  {/* Advance live dispatch state */}
                   <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-800 text-xs">
-                    <span className="text-slate-400 text-[11px]">Advance live dispatch state:</span>
+                    <span className="text-slate-400 text-[11px]">Simulate dispatch event:</span>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <button
                         onClick={() => handleUpdateStatus(b.id, 'en_route')}
                         className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px]"
                       >
-                        Set En Route
+                        En Route
+                      </button>
+                      <button
+                        onClick={() => handleUpdateStatus(b.id, 'arrived')}
+                        className="px-2.5 py-1 rounded-lg bg-cyan-950 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-900 text-[11px]"
+                      >
+                        Arrived
                       </button>
                       <button
                         onClick={() => handleUpdateStatus(b.id, 'in_progress')}
                         className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px]"
                       >
-                        Set In Progress
+                        In Progress
                       </button>
                       <button
                         onClick={() => handleUpdateStatus(b.id, 'completed')}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-950/80 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold hover:bg-emerald-900"
+                        className="px-2.5 py-1 rounded-lg bg-emerald-950 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold hover:bg-emerald-900"
                       >
-                        Mark Completed
+                        Completed
                       </button>
                     </div>
                   </div>

@@ -11,10 +11,11 @@ import PriceCalculatorModal from './components/PriceCalculatorModal';
 import BookingTracker from './components/BookingTracker';
 import PartnerDashboard from './components/PartnerDashboard';
 import SafetyBadges from './components/SafetyBadges';
-import { Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
+import AIAgentAssistant from './components/AIAgentAssistant';
+import { Sparkles, AlertCircle, RefreshCw, Bot } from 'lucide-react';
 
 export default function App() {
-  const { role, maids, loading, error, toast } = useApp();
+  const { role, maids, loading, error, toast, setIsAIAssistantOpen } = useApp();
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-emerald-500 selection:text-white">
@@ -25,6 +26,8 @@ export default function App() {
           <div className={`px-4 py-3 rounded-2xl shadow-2xl text-xs sm:text-sm font-bold flex items-center gap-2 border ${
             toast.type === 'error'
               ? 'bg-rose-950/90 text-rose-300 border-rose-500/40'
+              : toast.type === 'info'
+              ? 'bg-cyan-950/90 text-cyan-300 border-cyan-500/40'
               : 'bg-emerald-950/90 text-emerald-300 border-emerald-500/40'
           }`}>
             <Sparkles className="w-4 h-4 text-emerald-400" />
@@ -35,6 +38,20 @@ export default function App() {
 
       {/* Global Navigation */}
       <Navbar />
+
+      {/* Floating AI Agent Trigger Button (Bottom Right) */}
+      <button
+        onClick={() => setIsAIAssistantOpen(true)}
+        className="fixed bottom-6 right-6 z-40 p-4 rounded-3xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 text-white shadow-2xl shadow-purple-500/40 border border-purple-400/30 flex items-center gap-2.5 transition transform hover:scale-105 group"
+        title="Open MaidEase Sakhi AI Assistant"
+      >
+        <Bot className="w-6 h-6 animate-pulse text-purple-200" />
+        <span className="font-bold text-sm hidden sm:inline">Ask AI Sakhi</span>
+        <span className="flex h-2.5 w-2.5 relative">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-pink-500" />
+        </span>
+      </button>
 
       {/* Main Content View Switcher */}
       <main className="flex-1">
@@ -63,14 +80,14 @@ export default function App() {
                   {[1, 2, 3, 4, 5, 6].map((sk) => (
                     <div key={sk} className="glass-card rounded-3xl p-6 h-72 animate-pulse space-y-4">
                       <div className="flex gap-4">
-                        <div className="w-16 h-16 bg-slate-800 rounded-2xl"></div>
+                        <div className="w-16 h-16 bg-slate-800 rounded-2xl" />
                         <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-slate-800 rounded w-3/4"></div>
-                          <div className="h-3 bg-slate-800 rounded w-1/2"></div>
+                          <div className="h-4 bg-slate-800 rounded w-3/4" />
+                          <div className="h-3 bg-slate-800 rounded w-1/2" />
                         </div>
                       </div>
-                      <div className="h-8 bg-slate-800 rounded-xl"></div>
-                      <div className="h-4 bg-slate-800 rounded w-full"></div>
+                      <div className="h-8 bg-slate-800 rounded-xl" />
+                      <div className="h-4 bg-slate-800 rounded w-full" />
                     </div>
                   ))}
                 </div>
@@ -102,6 +119,7 @@ export default function App() {
       </main>
 
       {/* Global Modals */}
+      <AIAgentAssistant />
       <DirectCallModal />
       <InstantBookingModal />
       <MaidProfileModal />
