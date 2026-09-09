@@ -1,5 +1,31 @@
 [
   {
+    "id": "BK-3016",
+    "maidId": "maid_pune_1",
+    "maidName": "Sunita Shinde",
+    "maidAvatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80",
+    "maidPhone": "+91 98234 11201",
+    "customerName": "Rahul Sharma",
+    "customerPhone": "+91 98765 43210",
+    "address": "Flat 304, Green Glen Heights, Indiranagar, Bengaluru",
+    "serviceType": "Deep House Cleaning & Cooking",
+    "frequency": "scheduled",
+    "scheduledTime": "Tomorrow Morning (8:00 AM - 10:00 AM)",
+    "status": "arrived",
+    "otp": "5333",
+    "totalAmount": 329,
+    "paymentMethod": "Cash after service",
+    "createdAt": "2026-09-09T18:34:44.659Z",
+    "etaRemainingMins": 0,
+    "notes": "Please bring basic surface cleaner if possible.",
+    "coordinates": {
+      "maidLat": 18.5074,
+      "maidLng": 73.8077,
+      "destinationLat": 18.5987,
+      "destinationLng": 73.7661
+    }
+  },
+  {
     "id": "BK-9172",
     "maidId": "maid_4",
     "maidName": "Anita Devi",

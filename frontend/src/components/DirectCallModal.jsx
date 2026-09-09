@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { api } from '../services/api';
+import { realtime } from '../services/realtime';
+import { webrtc } from '../services/webrtc';
 import { 
   PhoneCall, PhoneOff, Mic, MicOff, Volume2, VolumeX, 
   MessageSquare, Zap, Clock, ShieldCheck, MapPin, CheckCircle2, X, 
@@ -27,6 +29,7 @@ export default function DirectCallModal() {
   const [userSpokenText, setUserSpokenText] = useState('');
   const [isListeningUser, setIsListeningUser] = useState(false);
   const [isAiResponding, setIsAiResponding] = useState(false);
+  const [isHumanConnected, setIsHumanConnected] = useState(false);
 
   // My Personal Phone for Real Call Testing
   const [testMobileNumber, setTestMobileNumber] = useState(userPhoneNumber || '');
@@ -35,6 +38,7 @@ export default function DirectCallModal() {
   const ringOscillatorRef = useRef(null);
   const recognitionRef = useRef(null);
   const synthRef = useRef(null);
+  const activeCallIdRef = useRef(null);
 
   const maid = selectedMaidForCall;
 
@@ -70,16 +74,34 @@ export default function DirectCallModal() {
     synthRef.current = window.speechSynthesis;
   }, []);
 
-  // Ringtone synthesizer
+  // Ringtone & WebRTC Initiation
   useEffect(() => {
     if (!maid) return;
+
+    const callId = `CALL-${Date.now()}`;
+    activeCallIdRef.current = callId;
 
     setCallState('ringing');
     setCallDuration(0);
     setMaidSpeaking(false);
     setUserSpokenText('');
+    setIsHumanConnected(false);
+
     const defaultGreeting = `Namaskar ji! Main ${maid.name} bol rahi hu Pune se. Aapko cooking ya safai me kya help chahiye?`;
     setCurrentSpokenReply(defaultGreeting);
+
+    // Start WebRTC initiation to ring Maid partner's tab/phone!
+    webrtc.initiateCall(callId, maid.id, 'Customer in Pune').catch(console.error);
+
+    // Listen if a real person (Maid) accepts call
+    const unsubAccept = realtime.on('call_accepted', ({ callId: acceptedId }) => {
+      if (acceptedId === activeCallIdRef.current) {
+        stopRingtone();
+        setCallState('connected');
+        setIsHumanConnected(true);
+        showToast(`Connected to real helper ${maid.name} via WebRTC Audio!`, 'success');
+      }
+    });
 
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -107,17 +129,19 @@ export default function DirectCallModal() {
       console.log('Web Audio tone init handled');
     }
 
-    // Connect automatically after 2.4 seconds
-    const connectTimer = setTimeout(() => {
+    // If maid doesn't pick up within 3.5 seconds, autonomous Gemini AI Persona takes over!
+    const aiFallbackTimer = setTimeout(() => {
       stopRingtone();
       setCallState('connected');
       speakReply(defaultGreeting);
-    }, 2400);
+    }, 3500);
 
     return () => {
-      clearTimeout(connectTimer);
+      clearTimeout(aiFallbackTimer);
+      unsubAccept();
       stopRingtone();
       if (synthRef.current) synthRef.current.cancel();
+      webrtc.endCall(callId);
     };
   }, [maid]);
 
@@ -132,7 +156,6 @@ export default function DirectCallModal() {
     }
   };
 
-  // Speak AI response
   const speakReply = (textToSpeak) => {
     if (!isSpeakerOn || !synthRef.current) return;
     
@@ -149,7 +172,6 @@ export default function DirectCallModal() {
     synthRef.current.speak(utterance);
   };
 
-  // Call duration counter
   useEffect(() => {
     let interval;
     if (callState === 'connected') {
@@ -160,7 +182,6 @@ export default function DirectCallModal() {
     return () => clearInterval(interval);
   }, [callState]);
 
-  // Local fallback reply generator if backend route lags
   const getLocalPersonaReply = (query) => {
     const text = query.toLowerCase();
     if (text.includes('available') || text.includes('aa sakti') || text.includes('time') || text.includes('kab')) {
@@ -175,13 +196,9 @@ export default function DirectCallModal() {
     if (text.includes('safai') || text.includes('clean') || text.includes('bartan') || text.includes('jhadu')) {
       return `Safai me rooms ka jhadu, pocha, bathroom scrubbing aur bartan pura neat and clean kar dungi!`;
     }
-    if (text.includes('pune') || text.includes('kothrud') || text.includes('viman nagar') || text.includes('hinjawadi') || text.includes('wakad')) {
-      return `Haan ji, main Pune me hi rehti hu aur yahan regular kam karti hu. Aap address confirm kijiye main nikal rahi hu.`;
-    }
     return `Ji bilkul, main samajh gayi. Main ${maid?.location || 'Pune'} se turant nikalne ke liye taiyar hu!`;
   };
 
-  // Handle user query (voice or typed)
   const handleSendVoiceQuery = async (queryText) => {
     if (!queryText.trim()) return;
     setIsAiResponding(true);
@@ -239,6 +256,8 @@ export default function DirectCallModal() {
     if (synthRef.current) synthRef.current.cancel();
     setCallState('ended');
 
+    webrtc.endCall(activeCallIdRef.current);
+
     if (maid && callDuration > 0) {
       api.logCall({
         maidId: maid.id,
@@ -246,7 +265,7 @@ export default function DirectCallModal() {
         durationSeconds: callDuration,
         callType: 'outgoing',
         status: 'completed',
-        notes: userSpokenText ? `Spoken: "${userSpokenText}"` : 'Direct live call'
+        notes: userSpokenText ? `Spoken: "${userSpokenText}"` : 'Real WebRTC & AI Voice Call'
       }).catch(console.error);
     }
 
@@ -258,6 +277,8 @@ export default function DirectCallModal() {
   const handleBookFromCall = () => {
     stopRingtone();
     if (synthRef.current) synthRef.current.cancel();
+    webrtc.endCall(activeCallIdRef.current);
+
     const currentMaid = maid;
     setSelectedMaidForCall(null);
     setSelectedMaidForBooking(currentMaid);
@@ -270,7 +291,6 @@ export default function DirectCallModal() {
     return `${m}:${s}`;
   };
 
-  // Dispatch Real Call / WhatsApp to User's Own Phone
   const handleDispatchToMyPhone = async () => {
     if (!testMobileNumber.trim()) {
       showToast('Please enter your mobile number first (e.g. +91 9876543210)', 'error');
@@ -285,11 +305,8 @@ export default function DirectCallModal() {
         maidId: maid?.id,
         maidName: maid?.name
       });
-    } catch (e) {
-      // Handled gracefully
-    }
+    } catch (e) {}
 
-    // Trigger phone dialer
     window.location.href = `tel:${testMobileNumber.replace(/\s+/g, '')}`;
     showToast(`Calling ${testMobileNumber} directly! Check your phone dialer.`, 'success');
   };
@@ -327,7 +344,11 @@ export default function DirectCallModal() {
               }`} />
             </span>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
-              {callState === 'ringing' ? 'Connecting Live Audio Call...' : 'Live Real-Time Voice Call Active'}
+              {callState === 'ringing' 
+                ? 'Ringing Maid in Pune (WebRTC & Telephony)...' 
+                : isHumanConnected 
+                ? '🟢 Two-Way Human WebRTC Audio Active' 
+                : '🟢 Live Voice Call Active (Gemini AI Agent)'}
             </span>
           </div>
 
@@ -373,13 +394,13 @@ export default function DirectCallModal() {
           <div className="mt-2">
             {callState === 'ringing' ? (
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-xs font-semibold animate-pulse">
-                <span>Ringing maid phone in Pune...</span>
+                <span>Ringing maid device & WebRTC bridge...</span>
               </div>
             ) : (
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-bold font-mono">
                 <Clock className="w-3.5 h-3.5 text-emerald-400" />
                 <span>{formatTimer(callDuration)}</span>
-                <span className="text-[10px] text-emerald-400 font-sans font-normal">• AI Voice Bridge Active</span>
+                <span className="text-[10px] text-emerald-400 font-sans font-normal">• Encrypted VoIP Audio</span>
               </div>
             )}
           </div>
@@ -408,7 +429,7 @@ export default function DirectCallModal() {
               <div className="flex items-center justify-between text-[11px] font-bold text-emerald-400 mb-1">
                 <span className="flex items-center gap-1.5">
                   <MessageSquare className="w-3.5 h-3.5" />
-                  <span>{maid.name} (Live Voice):</span>
+                  <span>{maid.name} ({isHumanConnected ? 'Live Real Person' : 'Live Voice Persona'}):</span>
                 </span>
                 {maidSpeaking && <span className="text-[10px] text-emerald-300 animate-pulse font-semibold">🔊 Speaking...</span>}
               </div>
@@ -445,7 +466,7 @@ export default function DirectCallModal() {
             </div>
           )}
 
-          {/* In-Call Text Input for Non-Mic Users */}
+          {/* In-Call Text Input */}
           {callState === 'connected' && (
             <div className="mt-2.5 w-full flex items-center gap-1.5">
               <input
@@ -458,7 +479,7 @@ export default function DirectCallModal() {
                     handleSendVoiceQuery(inCallTextInput);
                   }
                 }}
-                placeholder="Type here to speak to maid (e.g. Kya aap Kothrud aa sakti ho?)..."
+                placeholder="Type in call (e.g. Kya aap Kothrud aa sakti ho?)..."
                 className="flex-1 px-3 py-2 text-xs bg-slate-800/90 border border-slate-700 rounded-xl text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-400"
               />
               <button
@@ -477,7 +498,7 @@ export default function DirectCallModal() {
           )}
         </div>
 
-        {/* Real Phone Number Calling Feature */}
+        {/* Real Phone Calling Feature */}
         <div className="z-10 mt-3 p-3 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 space-y-2">
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold text-indigo-300 flex items-center gap-1.5">
@@ -516,7 +537,6 @@ export default function DirectCallModal() {
         {/* Bottom Call Controls */}
         <div className="z-10 pt-3 border-t border-slate-800/80 space-y-2.5">
           <div className="flex items-center justify-center gap-3">
-            {/* Live Mic Toggle */}
             <button
               onClick={toggleMicListening}
               className={`p-3 rounded-2xl border transition flex items-center justify-center ${
@@ -529,7 +549,6 @@ export default function DirectCallModal() {
               {isListeningUser ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
             </button>
 
-            {/* End Call */}
             <button
               onClick={handleEndCall}
               className="p-3.5 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 text-white hover:opacity-90 shadow-lg shadow-rose-600/30 transition transform hover:scale-105"
@@ -538,20 +557,19 @@ export default function DirectCallModal() {
               <PhoneOff className="w-6 h-6" />
             </button>
 
-            {/* Speaker Toggle */}
             <button
-              onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-              className={`p-3 rounded-2xl border transition ${
-                isSpeakerOn
-                  ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300'
-                  : 'bg-slate-800 border-slate-700 text-slate-300'
+              onClick={() => {
+                webrtc.toggleMute(!isMuted);
+                setIsMuted(!isMuted);
+              }}
+              className={`p-3.5 rounded-2xl border transition ${
+                isMuted ? 'bg-red-500/20 border-red-500 text-red-300' : 'bg-slate-800 border-slate-700 text-slate-300'
               }`}
-              title="Speaker Toggle"
+              title={isMuted ? 'Unmute' : 'Mute'}
             >
-              {isSpeakerOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
             </button>
 
-            {/* Fast-Track Instant Book */}
             <button
               onClick={handleBookFromCall}
               className="flex-1 flex items-center justify-center gap-1.5 py-3 px-3 rounded-2xl font-bold text-xs sm:text-sm bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 hover:opacity-95 shadow-lg shadow-emerald-500/20"
@@ -561,7 +579,6 @@ export default function DirectCallModal() {
             </button>
           </div>
 
-          {/* Real Phone Dial & WhatsApp Direct Links to Maid */}
           <div className="flex items-center justify-between text-xs bg-slate-900/60 p-2 rounded-xl border border-slate-800">
             <span className="text-slate-400 text-[11px]">Dial Maid directly:</span>
             <div className="flex items-center gap-2">

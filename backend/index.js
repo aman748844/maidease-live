@@ -5,7 +5,6 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 app.use(cors());
 app.use(express.json());
@@ -37,27 +36,8 @@ function saveData(filePath, data) {
   }
 }
 
-// Initial data load
 let maids = loadData(MAIDS_FILE, []);
-let bookings = loadData(BOOKINGS_FILE, [
-  {
-    id: "BK-1001",
-    maidId: "maid_pune_1",
-    maidName: "Sunita Shinde",
-    customerName: "Aman User",
-    customerPhone: "+91 98765 00000",
-    address: "Flat 402, Rohan Tarang, Wakad, Pune",
-    serviceType: "Cooking & Kitchen Cleaning",
-    frequency: "instant",
-    scheduledTime: "ASAP (Instant 20-min)",
-    status: "in_progress",
-    totalAmount: 329,
-    paymentMethod: "Cash after service",
-    createdAt: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-    etaRemainingMins: 0,
-    notes: "Please make dinner (Chapati, Dal, Paneer Bhurji)."
-  }
-]);
+let bookings = loadData(BOOKINGS_FILE, []);
 let callLogs = loadData(CALLS_FILE, []);
 
 // -------------------------------------------------------------
@@ -76,7 +56,6 @@ function broadcastEvent(eventType, payload) {
   }
 }
 
-// SSE Connection Endpoint
 app.get('/api/realtime/stream', (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -101,7 +80,6 @@ app.get('/api/realtime/stream', (req, res) => {
   });
 });
 
-// Client Event Emission
 app.post('/api/realtime/emit', (req, res) => {
   const { event, data } = req.body;
   if (!event) return res.status(400).json({ success: false, message: 'Event name is required' });
@@ -109,13 +87,76 @@ app.post('/api/realtime/emit', (req, res) => {
   res.json({ success: true, event });
 });
 
-// Active GPS Simulation Trackers (Pune coordinates: 18.5204 N, 73.8567 E)
+// -------------------------------------------------------------
+// WEBRTC TWO-WAY AUDIO SIGNALING BRIDGE
+// -------------------------------------------------------------
+const activeCalls = new Map();
+
+// Customer initiates call to Maid Partner
+app.post('/api/webrtc/call-maid', (req, res) => {
+  const { maidId, customerName = 'Customer in Pune', callId = `CALL-${Date.now()}` } = req.body;
+  const maid = maids.find(m => m.id === maidId);
+
+  const callSession = {
+    callId,
+    maidId,
+    maidName: maid ? maid.name : 'Pune Maid',
+    customerName,
+    status: 'ringing',
+    startedAt: new Date().toISOString()
+  };
+
+  activeCalls.set(callId, callSession);
+
+  // Broadcast incoming call to Maid's screen/tab
+  broadcastEvent('incoming_call_ring', callSession);
+
+  res.json({ success: true, callSession });
+});
+
+// WebRTC signal relay (Offer, Answer, ICE candidate exchange)
+app.post('/api/webrtc/signal', (req, res) => {
+  const { callId, type, signal, sender } = req.body;
+  
+  broadcastEvent('webrtc_signal', {
+    callId,
+    type,
+    signal,
+    sender,
+    timestamp: Date.now()
+  });
+
+  res.json({ success: true });
+});
+
+// Maid accepts call
+app.post('/api/webrtc/answer-call', (req, res) => {
+  const { callId } = req.body;
+  if (activeCalls.has(callId)) {
+    activeCalls.get(callId).status = 'connected';
+  }
+
+  broadcastEvent('call_accepted', { callId, status: 'connected' });
+  res.json({ success: true });
+});
+
+// End call
+app.post('/api/webrtc/end-call', (req, res) => {
+  const { callId } = req.body;
+  activeCalls.delete(callId);
+
+  broadcastEvent('call_ended', { callId });
+  res.json({ success: true });
+});
+
+// -------------------------------------------------------------
+// Active GPS Simulation Trackers
+// -------------------------------------------------------------
 const activeGpsTrackers = new Map();
 
 function startGpsSimulation(bookingId) {
   if (activeGpsTrackers.has(bookingId)) return;
 
-  // Base coordinates around Pune (Kothrud / Wakad / Viman Nagar)
   let startLat = 18.5074 + (Math.random() - 0.5) * 0.02;
   let startLng = 73.8077 + (Math.random() - 0.5) * 0.02;
   const targetLat = 18.5987;
@@ -161,7 +202,7 @@ function startGpsSimulation(bookingId) {
 }
 
 // -------------------------------------------------------------
-// 1. Get All Maids (with city & filter support)
+// 1. Get All Maids
 // -------------------------------------------------------------
 app.get('/api/maids', (req, res) => {
   const { city, service, status, search, maxDistance, maxPrice } = req.query;
@@ -209,14 +250,12 @@ app.get('/api/maids', (req, res) => {
   });
 });
 
-// 2. Get Single Maid
 app.get('/api/maids/:id', (req, res) => {
   const maid = maids.find(m => m.id === req.params.id);
   if (!maid) return res.status(404).json({ success: false, message: 'Maid not found' });
   res.json({ success: true, maid });
 });
 
-// 3. Update Maid Status
 app.put('/api/maids/:id/status', (req, res) => {
   const { status, busyUntil, etaMins } = req.body;
   const index = maids.findIndex(m => m.id === req.params.id);
@@ -232,7 +271,6 @@ app.put('/api/maids/:id/status', (req, res) => {
   res.json({ success: true, message: 'Status updated successfully', maid: maids[index] });
 });
 
-// 4. Update Maid Pricing
 app.put('/api/maids/:id/pricing', (req, res) => {
   const { hourlyRate, oneTimeVisit, monthlyEstimate } = req.body;
   const index = maids.findIndex(m => m.id === req.params.id);
@@ -248,7 +286,30 @@ app.put('/api/maids/:id/pricing', (req, res) => {
   res.json({ success: true, message: 'Pricing updated successfully', maid: maids[index] });
 });
 
-// 5. Price Estimator
+// Submit Customer Review
+app.post('/api/maids/:id/reviews', (req, res) => {
+  const { author = 'Verified Pune Customer', rating = 5, comment = 'Excellent service!' } = req.body;
+  const index = maids.findIndex(m => m.id === req.params.id);
+  if (index === -1) return res.status(404).json({ success: false, message: 'Maid not found' });
+
+  const newReview = {
+    author,
+    rating: Number(rating),
+    date: 'Just now',
+    comment
+  };
+
+  if (!maids[index].recentReviews) maids[index].recentReviews = [];
+  maids[index].recentReviews.unshift(newReview);
+  maids[index].reviewCount = (maids[index].reviewCount || 0) + 1;
+
+  saveData(MAIDS_FILE, maids);
+  broadcastEvent('maid_updated', maids[index]);
+
+  res.json({ success: true, review: newReview, maid: maids[index] });
+});
+
+// Price Estimator
 app.post('/api/estimate-price', (req, res) => {
   const { bhk = '2', services = ['cleaning', 'cooking'], familyMembers = 3, frequency = 'monthly' } = req.body;
 
@@ -284,7 +345,7 @@ app.post('/api/estimate-price', (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 6. Bookings Endpoints
+// Bookings Endpoints
 // -------------------------------------------------------------
 app.get('/api/bookings', (req, res) => {
   res.json({ success: true, bookings: bookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) });
@@ -328,7 +389,6 @@ app.post('/api/bookings', (req, res) => {
   bookings.unshift(newBooking);
   saveData(BOOKINGS_FILE, bookings);
 
-  // Mark maid as busy
   const mIndex = maids.findIndex(m => m.id === maidId);
   if (mIndex !== -1) {
     maids[mIndex].status = 'busy';
@@ -369,47 +429,30 @@ app.put('/api/bookings/:id/status', (req, res) => {
   res.json({ success: true, message: `Booking status updated to ${status}`, booking: bookings[index] });
 });
 
-// -------------------------------------------------------------
-// 7. Call Logs & Real Telephony Dispatch
-// -------------------------------------------------------------
-app.post('/api/calls/log', (req, res) => {
-  const { maidId, maidName, durationSeconds, callType = 'outgoing', status = 'connected', notes } = req.body;
-  const callEntry = {
-    id: `CALL-${Date.now()}`,
-    maidId,
-    maidName,
-    durationSeconds: durationSeconds || 0,
-    callType,
-    status,
-    notes: notes || 'Live simulated voice conversation',
-    timestamp: new Date().toISOString()
-  };
+// Doorstep OTP Verification by Maid Partner
+app.post('/api/bookings/:id/verify-otp', (req, res) => {
+  const { otp } = req.body;
+  const index = bookings.findIndex(b => b.id === req.params.id);
+  if (index === -1) return res.status(404).json({ success: false, message: 'Booking not found' });
 
-  callLogs.unshift(callEntry);
-  saveData(CALLS_FILE, callLogs);
-  broadcastEvent('call_logged', callEntry);
-
-  res.json({ success: true, message: 'Call logged successfully', call: callEntry });
+  if (bookings[index].otp === otp.trim()) {
+    bookings[index].status = 'in_progress';
+    bookings[index].otpVerified = true;
+    saveData(BOOKINGS_FILE, bookings);
+    broadcastEvent('booking_updated', bookings[index]);
+    return res.json({ success: true, message: 'OTP verified! Service started.' });
+  } else {
+    return res.status(400).json({ success: false, message: 'Invalid OTP. Please check with customer.' });
+  }
 });
 
-app.get('/api/calls', (req, res) => {
-  res.json({ success: true, callLogs });
-});
-
-// Real Phone Call Dispatch Endpoint (Supports User's Own Number & Twilio/Telephony Bridge)
+// Telephony dispatch
 app.post('/api/telephony/dispatch-call', (req, res) => {
   const { targetPhoneNumber, maidId, maidName } = req.body;
+  if (!targetPhoneNumber) return res.status(400).json({ success: false, message: 'Phone number is required' });
 
-  if (!targetPhoneNumber) {
-    return res.status(400).json({ success: false, message: 'Phone number is required' });
-  }
+  const maid = maids.find(m => m.id === maidId) || { name: maidName || 'Pune Verified Maid', phone: '+91 98234 11201' };
 
-  const maid = maids.find(m => m.id === maidId) || {
-    name: maidName || 'Pune Verified Maid',
-    phone: '+91 98234 11201'
-  };
-
-  // Telephony log
   const teleEntry = {
     id: `TEL-${Date.now()}`,
     targetPhoneNumber,
@@ -423,51 +466,56 @@ app.post('/api/telephony/dispatch-call', (req, res) => {
 
   broadcastEvent('telephony_call_dispatched', teleEntry);
 
-  res.json({
-    success: true,
-    message: `Call successfully dispatched to ${targetPhoneNumber}!`,
-    details: teleEntry
-  });
+  res.json({ success: true, message: `Call successfully dispatched to ${targetPhoneNumber}!`, details: teleEntry });
 });
 
 // -------------------------------------------------------------
-// 8. AI AGENT & AI MODELS (Google Gemini + Marathi/Hindi Matcher)
+// GOOGLE GEMINI AI MODEL INTEGRATION
 // -------------------------------------------------------------
+async function callGeminiFlash(prompt, systemInstruction = '') {
+  const apiKey = process.env.GEMINI_API_KEY || '';
+  if (!apiKey) return null;
 
-// AI Agent 1: Requirement Matcher & Entity Extractor
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
+        generationConfig: { maxOutputTokens: 250, temperature: 0.7 }
+      })
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+  } catch (e) {
+    console.error('Gemini API fetch error:', e);
+    return null;
+  }
+}
+
+// AI Agent 1: Natural Language Requirement Matcher
 app.post('/api/ai/agent-match', async (req, res) => {
   try {
     const { prompt = '' } = req.body;
     const text = prompt.toLowerCase();
 
-    // Natural Language Entity Extraction
     const detectedServices = [];
-    if (text.includes('cook') || text.includes('khana') || text.includes('roti') || text.includes('dinner') || text.includes('lunch') || text.includes('nashta') || text.includes('chapati') || text.includes('jevan')) {
-      detectedServices.push('Cooking');
-    }
-    if (text.includes('clean') || text.includes('safai') || text.includes('jhadu') || text.includes('poocha') || text.includes('mopping') || text.includes('dusting') || text.includes('kacha')) {
-      detectedServices.push('Deep Cleaning');
-    }
-    if (text.includes('bartan') || text.includes('dish') || text.includes('bhandi') || text.includes('utensil')) {
-      detectedServices.push('Dishwashing');
-    }
-    if (text.includes('baby') || text.includes('bacha') || text.includes('balak') || text.includes('child')) {
-      detectedServices.push('Babysitting');
-    }
-    if (text.includes('elder') || text.includes('bujurg') || text.includes('aji') || text.includes('ajoba') || text.includes('parents')) {
-      detectedServices.push('Elderly Care');
-    }
+    if (text.includes('cook') || text.includes('khana') || text.includes('roti') || text.includes('chapati') || text.includes('bhakri')) detectedServices.push('Cooking');
+    if (text.includes('clean') || text.includes('safai') || text.includes('jhadu') || text.includes('poocha') || text.includes('mopping')) detectedServices.push('Deep Cleaning');
+    if (text.includes('bartan') || text.includes('dish') || text.includes('bhandi')) detectedServices.push('Dishwashing');
+    if (text.includes('baby') || text.includes('bacha') || text.includes('child')) detectedServices.push('Babysitting');
+    if (text.includes('elder') || text.includes('bujurg') || text.includes('parents')) detectedServices.push('Elderly Care');
 
-    if (detectedServices.length === 0) {
-      detectedServices.push('Cooking', 'Deep Cleaning');
-    }
+    if (detectedServices.length === 0) detectedServices.push('Cooking', 'Deep Cleaning');
 
-    // Detect BHK
     let bhk = 2;
     const bhkMatch = text.match(/([1-5])\s*bhk/);
     if (bhkMatch) bhk = parseInt(bhkMatch[1], 10);
 
-    // Detect Pune Localities
     let targetArea = 'Pune City';
     if (text.includes('kothrud')) targetArea = 'Kothrud, Pune';
     else if (text.includes('viman nagar')) targetArea = 'Viman Nagar, Pune';
@@ -475,15 +523,12 @@ app.post('/api/ai/agent-match', async (req, res) => {
     else if (text.includes('baner')) targetArea = 'Baner, Pune';
     else if (text.includes('wakad')) targetArea = 'Wakad, Pune';
 
-    const isVeg = text.includes('veg') || text.includes('shakahari') || text.includes('pure veg');
+    const isVeg = text.includes('veg') || text.includes('shakahari');
 
-    // Multi-factor scoring
     const scoredMaids = maids.map(m => {
       let score = 55;
-
       const matchingServices = m.services.filter(s => detectedServices.some(ds => s.toLowerCase().includes(ds.toLowerCase())));
       score += matchingServices.length * 15;
-
       if (text.includes(m.location.toLowerCase().split(' ')[0])) score += 15;
       score += (m.rating - 4.0) * 12;
       if (m.status === 'available') score += 10;
@@ -497,7 +542,7 @@ app.post('/api/ai/agent-match', async (req, res) => {
         matchingServices,
         reasons: [
           `Location: ${m.location} (${m.etaMins} mins ETA)`,
-          `Rating: ${m.rating}★ with ${m.reviewCount}+ verified reviews`,
+          `Rating: ${m.rating}★ with verified reviews`,
           `Specialty: ${m.specialties.slice(0, 2).join(', ')}`,
           `Trust: Police & Aadhaar Verified Helper`
         ]
@@ -507,24 +552,25 @@ app.post('/api/ai/agent-match', async (req, res) => {
     scoredMaids.sort((a, b) => b.matchPercent - a.matchPercent);
     const topMatch = scoredMaids[0] || null;
 
-    const aiReasoning = `Maine aapke request (${detectedServices.join(' + ')}, ${bhk} BHK in ${targetArea}) ke liye ${topMatch?.maid.name} ko ${topMatch?.matchPercent}% compatibility ke saath match kiya hai. Yeh ${topMatch?.maid.location} me hain aur lagbhag ${topMatch?.maid.etaMins} minute me pahunch sakti hain.`;
+    let aiReasoning = `Maine Pune me aapke request (${detectedServices.join(' + ')}, ${bhk} BHK in ${targetArea}) ke liye ${topMatch?.maid.name} ko ${topMatch?.matchPercent}% compatibility ke sath match kiya hai. Yeh ${topMatch?.maid.location} me hain aur lagbhag ${topMatch?.maid.etaMins} minute me pahunch sakti hain!`;
+
+    // Try Gemini model enhancement if available
+    const geminiReply = await callGeminiFlash(
+      `User wants a home maid in Pune: "${prompt}". Best match is ${topMatch?.maid.name} (${topMatch?.maid.location}). Summarize why in 2 warm sentences in conversational Hindi/Marathi.`
+    );
+    if (geminiReply) aiReasoning = geminiReply;
 
     res.json({
       success: true,
-      queryAnalysis: {
-        detectedServices,
-        bhk,
-        targetArea,
-        isVeg
-      },
+      queryAnalysis: { detectedServices, bhk, targetArea, isVeg },
       topMatch,
       recommendations: scoredMaids.slice(0, 3),
       aiReasoning,
       suggestedChecklist: [
-        `Kitchen counter & gas stove deep cleaning`,
+        `Pre-arrival kitchen surface sanitization`,
         `Fresh ${isVeg ? 'Veg' : 'Daily'} meal prep (Gol Chapati / Bhakri + Sabji)`,
         `Utensil washing & kitchen sink sanitization`,
-        `Floor broom & wet mopping with surface disinfectant`
+        `Floor broom & wet mopping in Pune flat`
       ]
     });
   } catch (err) {
@@ -533,73 +579,74 @@ app.post('/api/ai/agent-match', async (req, res) => {
   }
 });
 
-// AI Agent 2: Real-Time Spoken Persona Generator
-app.post('/api/ai/call-voice-reply', (req, res) => {
+// AI Agent 2: Call Voice Persona Generator
+app.post('/api/ai/call-voice-reply', async (req, res) => {
   const { userMessage = '', maidId, maidName = 'Sunita Shinde' } = req.body;
   const msg = userMessage.toLowerCase().trim();
 
   const maid = maids.find(m => m.id === maidId) || {
     name: maidName,
     location: 'Kothrud, Pune',
-    pricing: { oneTimeVisit: 329, hourlyRate: 160 },
-    etaMins: 18
+    pricing: { oneTimeVisit: 329, hourlyRate: 160 }
   };
 
-  let reply = '';
-  let actionSuggestion = null;
+  // Try Gemini 1.5 Flash Model first
+  const geminiPersonaReply = await callGeminiFlash(
+    `You are ${maid.name}, a polite and friendly domestic helper and cook in Pune (${maid.location}). Customer asks: "${userMessage}". Reply verbally in 1-2 authentic, polite conversational sentences in Hindi or Marathi. Mention your visit price is ₹${maid.pricing.oneTimeVisit} if asked.`,
+    `Persona: Friendly, trusted Maharashtrian domestic maid living in Pune.`
+  );
 
+  if (geminiPersonaReply) {
+    return res.json({
+      success: true,
+      maidName: maid.name,
+      spokenReply: geminiPersonaReply,
+      modelUsed: 'gemini-1.5-flash',
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // Local fallback engine
+  let reply = '';
   if (!msg || msg.includes('hello') || msg.includes('namaste') || msg.includes('kaise ho') || msg.includes('namaskar')) {
-    reply = `Namaskar ji! Main ${maid.name} bol rahi hu Pune se. Sangaa, tumhala sw स्वयंपाक (cooking) ki gharachya safai madhe kai help havi ahe?`;
-    actionSuggestion = 'greet';
-  } else if (msg.includes('available') || msg.includes('aa sakti') || msg.includes('aoge') || msg.includes('time') || msg.includes('kab') || msg.includes('jaldi')) {
-    reply = `Ji haan bhaiya, main abhi ${maid.location} ke paas hi hu. Main 15 se 20 minute me aapke ghar pahunch jaungi.`;
-    actionSuggestion = 'check_availability';
-  } else if (msg.includes('pune') || msg.includes('kothrud') || msg.includes('viman nagar') || msg.includes('hinjawadi') || msg.includes('wakad') || msg.includes('baner')) {
-    reply = `Haan ji, main Pune me hi rehti hu aur aapke area me regular visit karti hu. Aapka flat number de dijiye main nikal rahi hu.`;
-    actionSuggestion = 'area_confirm';
-  } else if (msg.includes('price') || msg.includes('kitna') || msg.includes('rate') || msg.includes('charge') || msg.includes('rupaye') || msg.includes('paisa')) {
+    reply = `Namaskar ji! Main ${maid.name} bol rahi hu Pune se. Sangaa, cooking ki gharachya safai madhe kai help havi ahe?`;
+  } else if (msg.includes('available') || msg.includes('aa sakti') || msg.includes('time') || msg.includes('kab')) {
+    reply = `Ji haan bhaiya, main abhi ${maid.location} ke paas hi hu. 15 se 20 minute me aapke ghar pahunch jaungi.`;
+  } else if (msg.includes('price') || msg.includes('kitna') || msg.includes('rate') || msg.includes('charge') || msg.includes('rupaye')) {
     reply = `Ek time visit ka ₹${maid.pricing.oneTimeVisit} charge hota hai. Isme khana banana aur bartan/kitchen safai dono complete ho jata hai.`;
-    actionSuggestion = 'quote_price';
-  } else if (msg.includes('khana') || msg.includes('cook') || msg.includes('roti') || msg.includes('chapati') || msg.includes('bhakri') || msg.includes('veg')) {
-    reply = `Ji bilkul! Main gol chapati, bhakri, dal tadka, veg sabji sab acche aur hygienic tarike se bana leti hu. Pure ghar jaisa swad hoga!`;
-    actionSuggestion = 'cook_details';
+  } else if (msg.includes('chapati') || msg.includes('roti') || msg.includes('bhakri') || msg.includes('khana') || msg.includes('cook')) {
+    reply = `Ji bilkul! Main gol chapati, jowar bhakri, dal tadka, veg sabji sab acche aur hygienic tarike se bana leti hu.`;
   } else if (msg.includes('safai') || msg.includes('clean') || msg.includes('jhadu') || msg.includes('poocha') || msg.includes('bartan')) {
     reply = `Safai me pure rooms ka sweeping, wet mopping, bathroom scrubbing aur bartan chamkakar rakh dungi.`;
-    actionSuggestion = 'cleaning_details';
-  } else if (msg.includes('aajao') || msg.includes('confirm') || msg.includes('book') || msg.includes('turant') || msg.includes('theek hai') || msg.includes('ha')) {
+  } else if (msg.includes('aajao') || msg.includes('confirm') || msg.includes('book') || msg.includes('turant')) {
     reply = `Theek hai ji, main apna kit lekar turant nikal rahi hu! Aap app par 'Confirm Book' daba dijiye taaki mujhe aapka address aur OTP mil jaye.`;
-    actionSuggestion = 'confirm_booking';
   } else {
-    reply = `Ji bilkul, main samajh gayi. Main ${maid.location} se nikalne ke liye ready hu. Aapka kaam bilkul tasalli se hoga!`;
-    actionSuggestion = 'general';
+    reply = `Ji bilkul, main samajh gayi. Main ${maid.location} se nikalne ke liye taiyar hu. Aapka kaam bilkul tasalli se hoga!`;
   }
 
   res.json({
     success: true,
     maidName: maid.name,
     spokenReply: reply,
-    actionSuggestion,
+    modelUsed: 'local-multilingual-agent',
     timestamp: new Date().toISOString()
   });
 });
 
-// Health Check
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'active',
     city: 'Pune',
-    app: 'MaidEase Live Real-Time & AI Telephony API',
+    app: 'MaidEase Live Market-Ready API',
     connectedClients: sseClients.size,
-    activeGpsRides: activeGpsTrackers.size,
+    activeCalls: activeCalls.size,
     timestamp: new Date().toISOString()
   });
 });
 
 const server = app.listen(PORT, () => {
   console.log(`🚀 MaidEase Live Backend running at http://localhost:${PORT}`);
-  console.log(`📍 City configured: Pune (Kothrud, Viman Nagar, Hinjawadi, Baner, Wakad)`);
-  console.log(`⚡ Real-Time SSE Stream: http://localhost:${PORT}/api/realtime/stream`);
-  console.log(`🤖 AI Agent & Voice API: http://localhost:${PORT}/api/ai/agent-match`);
+  console.log(`⚡ WebRTC Signaling & Real-Time SSE active`);
 });
 
 server.on('error', (err) => {
