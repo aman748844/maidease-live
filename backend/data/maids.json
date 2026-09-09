@@ -1,17 +1,18 @@
 [
   {
-    "id": "maid_1",
-    "name": "Sunita Devi",
+    "id": "maid_pune_1",
+    "name": "Sunita Shinde",
     "avatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80",
-    "tagline": "Master Cook (North & South Indian) + Hygienic Kitchen Management",
+    "tagline": "Specialist Cook (Maharashtrian & North Indian) + Kitchen Hygiene",
     "status": "available",
-    "etaMins": 20,
+    "etaMins": 18,
     "busyUntil": null,
     "rating": 4.9,
-    "reviewCount": 184,
-    "experienceYears": 7,
-    "location": "Sector 45, Near Cyber Hub",
-    "distanceKm": 1.4,
+    "reviewCount": 196,
+    "experienceYears": 8,
+    "city": "Pune",
+    "location": "Kothrud (Near Karve Putala / MIT), Pune",
+    "distanceKm": 1.2,
     "phone": "+91 98234 11201",
     "whatsapp": "919823411201",
     "services": [
@@ -20,15 +21,15 @@
       "Deep Cleaning"
     ],
     "specialties": [
-      "Pure Veg & Non-Veg",
-      "Phulka Rotis & Curries",
-      "Healthy Diet Meals",
-      "Quick 30-min Prep"
+      "Poli / Chapati & Bhakri",
+      "Puran Poli & Dal Tadka",
+      "Healthy Veg & Non-Veg",
+      "Fast 25-min Meal Prep"
     ],
     "languages": [
+      "Marathi",
       "Hindi",
-      "English",
-      "Punjabi"
+      "English"
     ],
     "verified": {
       "police": true,
@@ -37,68 +38,69 @@
       "background": true
     },
     "pricing": {
-      "hourlyRate": 180,
-      "oneTimeVisit": 349,
-      "monthlyEstimate": 3500,
+      "hourlyRate": 160,
+      "oneTimeVisit": 329,
+      "monthlyEstimate": 3200,
       "perChore": {
-        "cooking": 1600,
-        "cleaning": 1100,
-        "dishwashing": 800,
-        "dusting": 600
+        "cooking": 1500,
+        "cleaning": 1000,
+        "dishwashing": 700,
+        "dusting": 500
       }
     },
     "availabilitySlots": [
-      "Instant Callout (Now)",
-      "Morning (7:00 AM - 11:00 AM)",
-      "Evening (5:00 PM - 8:30 PM)"
+      "Instant Dispatch (Now)",
+      "Morning (7:00 AM - 11:30 AM)",
+      "Evening (5:00 PM - 9:00 PM)"
     ],
-    "bio": "Experienced home chef with 7+ years serving families and working professionals. Specializes in hygienic food preparation, multiple cuisines, and managing kitchen cleanliness.",
+    "bio": "Experienced Pune home chef with 8+ years serving families in Kothrud and Deccan. Expert in authentic homemade meals, gol chapati, and hygienic kitchen maintenance.",
     "recentReviews": [
       {
-        "author": "Ananya Roy",
+        "author": "Aniket Deshmukh",
         "rating": 5,
         "date": "Yesterday",
-        "comment": "Sunita ji reached our home in exactly 20 minutes! Cooked delicious dinner for 4 guests without any hassle. Highly recommended!"
+        "comment": "Sunita tai arrived in 15 minutes at Kothrud flat! Amazing chapati and sabzi, clean kitchen."
       },
       {
-        "author": "Vikram Malhotra",
+        "author": "Sneha Kulkarni",
         "rating": 5,
         "date": "3 days ago",
-        "comment": "Very polite and hygienic. Her rotis and dal tadka are restaurant quality."
+        "comment": "Very polite, speaks fluent Marathi & Hindi. Trusted helper."
       }
     ]
   },
   {
-    "id": "maid_2",
-    "name": "Laxmi Shinde",
+    "id": "maid_pune_2",
+    "name": "Pooja Jadhav",
     "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&auto=format&fit=crop&q=80",
-    "tagline": "All-Rounder House Helper (Deep Sweeping, Mopping & Utensil Care)",
+    "tagline": "Master House Cleaner (Sweeping, Wet Mopping & Bathroom Sanitization)",
     "status": "available",
     "etaMins": 15,
     "busyUntil": null,
     "rating": 4.8,
-    "reviewCount": 142,
-    "experienceYears": 5,
-    "location": "Green Glen Layout, Block B",
-    "distanceKm": 0.8,
+    "reviewCount": 145,
+    "experienceYears": 6,
+    "city": "Pune",
+    "location": "Viman Nagar (Near Phoenix Marketcity), Pune",
+    "distanceKm": 1.5,
     "phone": "+91 98112 33452",
     "whatsapp": "919811233452",
     "services": [
       "Deep Cleaning",
       "Dishwashing",
-      "Laundry",
-      "Dusting"
+      "Dusting",
+      "Laundry"
     ],
     "specialties": [
-      "Bathroom Disinfection",
-      "Sparkling Bartan Clean",
-      "Floor Stain Removal",
-      "Wardrobe Organizing"
+      "Deep Bathroom Scrubbing",
+      "Spotless Tile Mopping",
+      "Balcony & Kitchen Clean",
+      "Utensil Disinfection"
     ],
     "languages": [
-      "Hindi",
       "Marathi",
-      "Kannada"
+      "Hindi",
+      "English"
     ],
     "verified": {
       "police": true,
@@ -109,129 +111,60 @@
     "pricing": {
       "hourlyRate": 140,
       "oneTimeVisit": 279,
-      "monthlyEstimate": 2800,
+      "monthlyEstimate": 2700,
       "perChore": {
-        "cleaning": 1000,
-        "dishwashing": 700,
-        "laundry": 600,
-        "dusting": 500
+        "cleaning": 950,
+        "dishwashing": 650,
+        "dusting": 450,
+        "laundry": 500
       }
     },
     "availabilitySlots": [
-      "Instant Callout (Now)",
+      "Instant Dispatch (Now)",
       "Full Day (8:00 AM - 6:00 PM)",
-      "Evening Slot"
+      "Evening Emergency Slot"
     ],
-    "bio": "Meticulous and punctual domestic helper. Expert in deep floor scrubbing, bathroom tile washing, utensil sanitization, and laundry folding.",
+    "bio": "Energetic and honest domestic helper serving Viman Nagar & Kalyani Nagar societies. Known for sparkling clean floors, prompt arrival, and background verified trust.",
     "recentReviews": [
       {
-        "author": "Priya Sharma",
+        "author": "Tanmay Joshi",
         "rating": 5,
-        "date": "2 days ago",
-        "comment": "Super clean work! Reached within 15 minutes of my urgent call. Will book monthly!"
-      },
-      {
-        "author": "Rohit Verma",
-        "rating": 4.5,
-        "date": "1 week ago",
-        "comment": "Laxmi did entire 3 BHK cleaning in 1.5 hours. Very honest and hardworking."
+        "date": "Today",
+        "comment": "Cleaned our 2 BHK in Viman Nagar thoroughly. Very punctual and polite."
       }
     ]
   },
   {
-    "id": "maid_3",
-    "name": "Pooja Kumari",
+    "id": "maid_pune_3",
+    "name": "Kavita Gaikwad",
     "avatar": "https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=300&auto=format&fit=crop&q=80",
-    "tagline": "Certified Nanny & Baby Care Specialist + Child Routine Management",
-    "status": "busy",
-    "etaMins": 45,
-    "busyUntil": "3:30 PM",
-    "rating": 4.95,
-    "reviewCount": 98,
-    "experienceYears": 6,
-    "location": "Indiranagar 100ft Road",
-    "distanceKm": 2.6,
-    "phone": "+91 97231 99081",
-    "whatsapp": "919723199081",
-    "services": [
-      "Babysitting",
-      "Child Care",
-      "Light Cooking",
-      "Kids Laundry"
-    ],
-    "specialties": [
-      "Toddler Engagement",
-      "Infant Feeding & Hygiene",
-      "First Aid Certified",
-      "Bedtime Routine"
-    ],
-    "languages": [
-      "Hindi",
-      "English",
-      "Bhojpuri"
-    ],
-    "verified": {
-      "police": true,
-      "aadhaar": true,
-      "medical": true,
-      "background": true
-    },
-    "pricing": {
-      "hourlyRate": 250,
-      "oneTimeVisit": 499,
-      "monthlyEstimate": 6500,
-      "perChore": {
-        "babysitting": 3000,
-        "cooking": 1200,
-        "childCare": 2500
-      }
-    },
-    "availabilitySlots": [
-      "Available After 3:30 PM",
-      "Night Babysitting",
-      "Full Day (8 AM - 7 PM)"
-    ],
-    "bio": "Certified child caregiver with background checks and nursery assistance experience. Trusted by 50+ working parents for gentle, attentive infant & toddler care.",
-    "recentReviews": [
-      {
-        "author": "Dr. Sneha Pillai",
-        "rating": 5,
-        "date": "Yesterday",
-        "comment": "Pooja is wonderful with our 2-year-old daughter. Extremely trustworthy and caring."
-      }
-    ]
-  },
-  {
-    "id": "maid_4",
-    "name": "Anita Devi",
-    "avatar": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&auto=format&fit=crop&q=80",
-    "tagline": "Elderly Care Companion & Patient Home Assistant",
+    "tagline": "All-in-One Family Cook & Maid (Hinjawadi IT Professional Specialist)",
     "status": "available",
-    "etaMins": 25,
+    "etaMins": 20,
     "busyUntil": null,
-    "rating": 4.85,
-    "reviewCount": 116,
-    "experienceYears": 8,
-    "location": "Koramangala 4th Block",
-    "distanceKm": 1.9,
-    "phone": "+91 98450 77123",
-    "whatsapp": "919845077123",
+    "rating": 4.9,
+    "reviewCount": 210,
+    "experienceYears": 9,
+    "city": "Pune",
+    "location": "Hinjawadi Phase 1 (Near Megapolis / Infosys Circle), Pune",
+    "distanceKm": 2.1,
+    "phone": "+91 98765 22340",
+    "whatsapp": "919876522340",
     "services": [
-      "Elderly Care",
       "Cooking",
-      "Medicine Tracking",
-      "Light Housekeeping"
+      "Deep Cleaning",
+      "Dishwashing",
+      "Babysitting"
     ],
     "specialties": [
-      "Mobility Assistance",
-      "BP & Sugar Log Support",
-      "Soft Diet Cooking",
-      "Compassionate Listening"
+      "Tiffin / Dabba Packing",
+      "Quick Breakfast & Dinner",
+      "Less Oil Healthy Food",
+      "Child Care & Kitchen Tidying"
     ],
     "languages": [
       "Hindi",
-      "Telugu",
-      "Tamil",
+      "Marathi",
       "English"
     ],
     "verified": {
@@ -241,121 +174,63 @@
       "background": true
     },
     "pricing": {
-      "hourlyRate": 220,
-      "oneTimeVisit": 450,
-      "monthlyEstimate": 5800,
+      "hourlyRate": 175,
+      "oneTimeVisit": 349,
+      "monthlyEstimate": 3500,
       "perChore": {
-        "elderlyCare": 3500,
-        "cooking": 1400,
-        "cleaning": 900
-      }
-    },
-    "availabilitySlots": [
-      "Instant Callout (Now)",
-      "Morning + Evening Slots",
-      "12-Hour Shift"
-    ],
-    "bio": "Dedicated senior citizen caregiver with nursing assistant training. Helps elders with daily walks, meals, medicine reminders, and companionship.",
-    "recentReviews": [
-      {
-        "author": "Karthik Nambiar",
-        "rating": 5,
-        "date": "4 days ago",
-        "comment": "Anita ji took utmost care of my elderly father. Very patient and respectful."
-      }
-    ]
-  },
-  {
-    "id": "maid_5",
-    "name": "Meena Bai",
-    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
-    "tagline": "Express Cleaning & Utensil Washing (Quick 45-Min Visit)",
-    "status": "offline",
-    "etaMins": 0,
-    "busyUntil": "Tomorrow 7:00 AM",
-    "rating": 4.7,
-    "reviewCount": 78,
-    "experienceYears": 4,
-    "location": "Whitefield Main Road",
-    "distanceKm": 3.8,
-    "phone": "+91 99120 44510",
-    "whatsapp": "919912044510",
-    "services": [
-      "Dishwashing",
-      "Deep Cleaning",
-      "Dusting"
-    ],
-    "specialties": [
-      "Emergency Post-Party Clean",
-      "Kitchen Sink Clearing",
-      "Balcony Wash"
-    ],
-    "languages": [
-      "Hindi",
-      "Kannada"
-    ],
-    "verified": {
-      "police": true,
-      "aadhaar": true,
-      "medical": true,
-      "background": true
-    },
-    "pricing": {
-      "hourlyRate": 130,
-      "oneTimeVisit": 249,
-      "monthlyEstimate": 2500,
-      "perChore": {
+        "cooking": 1600,
+        "cleaning": 1000,
         "dishwashing": 700,
-        "cleaning": 900,
-        "dusting": 500
+        "babysitting": 2500
       }
     },
     "availabilitySlots": [
-      "Early Morning (6:30 AM - 10:00 AM)",
-      "Afternoon (1:00 PM - 4:00 PM)"
+      "Instant Dispatch (Now)",
+      "Morning (6:30 AM - 10:30 AM)",
+      "Evening (6:00 PM - 9:30 PM)"
     ],
-    "bio": "Quick and reliable maid specializing in rapid utensil washing and floor sanitizing. Excellent for busy bachelors and joint families.",
+    "bio": "Trusted helper for Hinjawadi tech professionals. Specialized in cooking nutritious daily meals (Veg & Non-Veg), quick breakfast, and handling complete kitchen cleanup.",
     "recentReviews": [
       {
-        "author": "Aditya Joshi",
-        "rating": 4.5,
-        "date": "Last week",
-        "comment": "Cleaned up all party utensils in 40 minutes flat. Great value!"
+        "author": "Prashant Nair",
+        "rating": 5,
+        "date": "Yesterday",
+        "comment": "Best cook in Hinjawadi! Makes delicious rotis and takes care of kitchen cleanly."
       }
     ]
   },
   {
-    "id": "maid_6",
-    "name": "Rekha Verma",
-    "avatar": "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=300&auto=format&fit=crop&q=80",
-    "tagline": "Full-Service Housekeeper (Cooking + 3 BHK Deep Clean + Ironing)",
+    "id": "maid_pune_4",
+    "name": "Lata More",
+    "avatar": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=300&auto=format&fit=crop&q=80",
+    "tagline": "Elderly Care & Baby Sitter + Gentle Home Cooking",
     "status": "available",
-    "etaMins": 18,
+    "etaMins": 22,
     "busyUntil": null,
-    "rating": 4.9,
-    "reviewCount": 210,
-    "experienceYears": 9,
-    "location": "HSR Layout Sector 2",
-    "distanceKm": 1.1,
-    "phone": "+91 97761 22890",
-    "whatsapp": "919776122890",
+    "rating": 4.95,
+    "reviewCount": 168,
+    "experienceYears": 10,
+    "city": "Pune",
+    "location": "Baner / Balewadi (Near High Street), Pune",
+    "distanceKm": 1.8,
+    "phone": "+91 98450 77123",
+    "whatsapp": "919845077123",
     "services": [
+      "Elderly Care",
+      "Babysitting",
       "Cooking",
-      "Deep Cleaning",
-      "Laundry",
-      "Dishwashing",
       "Dusting"
     ],
     "specialties": [
-      "Continental & Indian Dishes",
-      "Steam Ironing",
-      "Pantry Organization",
-      "Sanitized Deep Scrub"
+      "Compassionate Senior Care",
+      "Toddler Engagement & Feeding",
+      "Diabetic / Low-Salt Diet",
+      "Medicine Timing Management"
     ],
     "languages": [
+      "Marathi",
       "Hindi",
-      "English",
-      "Bengali"
+      "English"
     ],
     "verified": {
       "police": true,
@@ -366,26 +241,88 @@
     "pricing": {
       "hourlyRate": 200,
       "oneTimeVisit": 399,
-      "monthlyEstimate": 4200,
+      "monthlyEstimate": 4500,
       "perChore": {
-        "cooking": 1800,
-        "cleaning": 1200,
-        "laundry": 700,
-        "dishwashing": 800
+        "elderlyCare": 3000,
+        "babysitting": 2600,
+        "cooking": 1400,
+        "dusting": 500
       }
     },
     "availabilitySlots": [
-      "Instant Callout (Now)",
-      "Morning Slot",
-      "Evening Slot"
+      "Instant Dispatch (Now)",
+      "Full Day Care (9:00 AM - 7:00 PM)",
+      "Evening Support"
     ],
-    "bio": "Experienced multi-tasker and cook with 9 years across luxury apartments. Verified credentials and punctual service with stellar client track record.",
+    "bio": "Certified senior and child caregiver with 10 years experience in Baner and Aundh. Highly patient, trained in basic first aid, and trusted by hundreds of Pune families.",
     "recentReviews": [
       {
-        "author": "Shalini Gupta",
+        "author": "Dr. Radhika Patil",
         "rating": 5,
-        "date": "Today",
-        "comment": "Rekha is simply the best! She came in 18 minutes, made breakfast, and cleaned the entire hall and kitchen impeccably."
+        "date": "2 days ago",
+        "comment": "Lata tai took such wonderful care of my elderly mother in Baner. 100% dependable."
+      }
+    ]
+  },
+  {
+    "id": "maid_pune_5",
+    "name": "Rekha Kamble",
+    "avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+    "tagline": "Super Fast Emergency Helper (Bartan, Safai & Kitchen Cleaning in 20 mins)",
+    "status": "available",
+    "etaMins": 12,
+    "busyUntil": null,
+    "rating": 4.85,
+    "reviewCount": 118,
+    "experienceYears": 4,
+    "city": "Pune",
+    "location": "Wakad (Near Datta Mandir Road), Pune",
+    "distanceKm": 0.9,
+    "phone": "+91 98220 99881",
+    "whatsapp": "919822099881",
+    "services": [
+      "Deep Cleaning",
+      "Dishwashing",
+      "Dusting"
+    ],
+    "specialties": [
+      "Instant 15-min Dispatch",
+      "High-pressure Utensil Washing",
+      "Quick Post-Party Cleanup",
+      "Kitchen Exhaust & Counter Degreasing"
+    ],
+    "languages": [
+      "Marathi",
+      "Hindi"
+    ],
+    "verified": {
+      "police": true,
+      "aadhaar": true,
+      "medical": true,
+      "background": true
+    },
+    "pricing": {
+      "hourlyRate": 150,
+      "oneTimeVisit": 299,
+      "monthlyEstimate": 2900,
+      "perChore": {
+        "cleaning": 1000,
+        "dishwashing": 700,
+        "dusting": 500
+      }
+    },
+    "availabilitySlots": [
+      "Instant Dispatch (Now)",
+      "Late Night Emergency Dispatch",
+      "Morning Rush (7:00 AM - 10:00 AM)"
+    ],
+    "bio": "Quick response domestic helper living in Wakad. Reaches within 15 minutes for urgent kitchen dishwashing, party aftermath cleaning, and apartment floor maintenance.",
+    "recentReviews": [
+      {
+        "author": "Amol Shinde",
+        "rating": 5,
+        "date": "3 days ago",
+        "comment": "Reached our Wakad society in just 12 minutes! Cleaned all dinner utensils rapidly."
       }
     ]
   }

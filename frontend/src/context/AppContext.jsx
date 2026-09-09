@@ -6,6 +6,8 @@ const AppContext = createContext();
 
 export function AppProvider({ children }) {
   const [role, setRole] = useState('customer'); // 'customer' | 'partner'
+  const [selectedCity, setSelectedCity] = useState('Pune'); // 'Pune' | 'Bengaluru' | 'Mumbai'
+  const [userPhoneNumber, setUserPhoneNumber] = useState(() => localStorage.getItem('user_phone_number') || '');
   const [maids, setMaids] = useState([]);
   const [availableCount, setAvailableCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -19,7 +21,7 @@ export function AppProvider({ children }) {
   const [isPriceCalculatorOpen, setIsPriceCalculatorOpen] = useState(false);
   const [isBookingTrackerOpen, setIsBookingTrackerOpen] = useState(false);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
-  const [activePartnerMaidId, setActivePartnerMaidId] = useState('maid_1'); // Sunita Devi
+  const [activePartnerMaidId, setActivePartnerMaidId] = useState('maid_pune_1'); // Sunita Shinde
 
   // Live Real-Time Telemetry & GPS State
   const [liveGpsData, setLiveGpsData] = useState({});
@@ -28,9 +30,9 @@ export function AppProvider({ children }) {
   const [filters, setFilters] = useState({
     search: '',
     service: 'all',
-    status: 'all', // 'all', 'available', 'busy', 'offline'
+    status: 'all',
     maxDistance: 5,
-    maxPrice: 300
+    maxPrice: 400
   });
 
   // Bookings & Calls
@@ -47,22 +49,28 @@ export function AppProvider({ children }) {
     }, 4500);
   };
 
+  const saveUserPhoneNumber = (phone) => {
+    setUserPhoneNumber(phone);
+    localStorage.setItem('user_phone_number', phone);
+    showToast(`Phone number set to ${phone} for real call dispatch!`, 'success');
+  };
+
   // Load maids
   const loadMaids = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.getMaids(filters);
+      const data = await api.getMaids({ ...filters, city: selectedCity });
       if (data.success) {
         setMaids(data.maids);
         setAvailableCount(data.availableCount);
       }
     } catch (err) {
       console.error(err);
-      setError('Could not connect to live helper network.');
+      setError('Could not connect to live Pune helper network.');
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, selectedCity]);
 
   // Load bookings
   const loadBookings = useCallback(async () => {
@@ -81,7 +89,6 @@ export function AppProvider({ children }) {
     loadMaids();
     loadBookings();
 
-    // Start Real-Time SSE Stream
     realtime.connect();
 
     const unsubConn = realtime.on('connection_status', ({ connected }) => {
@@ -91,7 +98,7 @@ export function AppProvider({ children }) {
     const unsubBookingCreated = realtime.on('booking_created', (newBooking) => {
       setBookings(prev => [newBooking, ...prev.filter(b => b.id !== newBooking.id)]);
       realtime.playChime('booking');
-      showToast(`🔔 Real-Time Alert: New booking dispatch #${newBooking.id} for ${newBooking.maidName}!`, 'success');
+      showToast(`🔔 New Booking Dispatch #${newBooking.id} for ${newBooking.maidName}!`, 'success');
       loadMaids();
     });
 
@@ -108,7 +115,6 @@ export function AppProvider({ children }) {
 
     const unsubGps = realtime.on('maid_location_update', (gps) => {
       setLiveGpsData(prev => ({ ...prev, [gps.bookingId]: gps }));
-      // Also update etaRemainingMins in bookings if matches
       setBookings(prev => prev.map(b => b.id === gps.bookingId ? { ...b, etaRemainingMins: gps.etaRemainingMins, status: gps.status } : b));
     });
 
@@ -121,7 +127,7 @@ export function AppProvider({ children }) {
     };
   }, [loadMaids, loadBookings]);
 
-  // Handle maid status toggle (from partner mode)
+  // Handle maid status toggle
   const toggleMaidStatus = async (maidId, newStatus, busyUntil = null, etaMins = 20) => {
     try {
       const res = await api.updateMaidStatus(maidId, { status: newStatus, busyUntil, etaMins });
@@ -154,6 +160,10 @@ export function AppProvider({ children }) {
       value={{
         role,
         setRole,
+        selectedCity,
+        setSelectedCity,
+        userPhoneNumber,
+        saveUserPhoneNumber,
         maids,
         availableCount,
         loading,

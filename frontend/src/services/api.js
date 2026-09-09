@@ -4,6 +4,7 @@ export const api = {
   // Fetch all maids with optional filters
   async getMaids(params = {}) {
     const query = new URLSearchParams();
+    if (params.city && params.city !== 'all') query.append('city', params.city);
     if (params.service && params.service !== 'all') query.append('service', params.service);
     if (params.status && params.status !== 'all') query.append('status', params.status);
     if (params.search) query.append('search', params.search);
@@ -22,7 +23,7 @@ export const api = {
     return res.json();
   },
 
-  // Update Maid Live Status (for Partner Dashboard)
+  // Update Maid Live Status
   async updateMaidStatus(id, statusData) {
     const res = await fetch(`${API_BASE}/maids/${id}/status`, {
       method: 'PUT',
@@ -33,7 +34,7 @@ export const api = {
     return res.json();
   },
 
-  // Update Maid Pricing (for Partner Dashboard)
+  // Update Maid Pricing
   async updateMaidPricing(id, pricingData) {
     const res = await fetch(`${API_BASE}/maids/${id}/pricing`, {
       method: 'PUT',
@@ -44,7 +45,7 @@ export const api = {
     return res.json();
   },
 
-  // Dynamic Price Estimator
+  // Price Estimator
   async estimatePrice(data) {
     const res = await fetch(`${API_BASE}/estimate-price`, {
       method: 'POST',
@@ -102,7 +103,18 @@ export const api = {
     return res.json();
   },
 
-  // AI Agent 1: Natural Language Requirement Matcher
+  // Dispatch Telephony Call to User Phone
+  async dispatchTelephonyCall(data) {
+    const res = await fetch(`${API_BASE}/telephony/dispatch-call`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to dispatch call to phone');
+    return res.json();
+  },
+
+  // AI Agent: Match & Query
   async matchAIAgent(prompt) {
     const res = await fetch(`${API_BASE}/ai/agent-match`, {
       method: 'POST',
@@ -113,7 +125,7 @@ export const api = {
     return res.json();
   },
 
-  // AI Agent 2: Call Voice Persona Spoken Reply
+  // AI Agent: Call Persona Voice Reply
   async getAICallReply(data) {
     const res = await fetch(`${API_BASE}/ai/call-voice-reply`, {
       method: 'POST',

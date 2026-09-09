@@ -1,19 +1,19 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { api } from '../services/api';
 import { 
   Clock, MapPin, PhoneCall, ShieldCheck, CheckCircle2, AlertTriangle, 
   X, Navigation, UserCheck, Sparkles, MessageSquare, KeyRound, 
-  Radio, Compass, Gauge, MessageCircle, ExternalLink
+  Radio, Compass, Gauge, MessageCircle, ExternalLink, Play
 } from 'lucide-react';
 
 const STATUS_STEPS = [
-  { key: 'requested', label: 'Requested', desc: 'Booking received by system' },
-  { key: 'accepted', label: 'Accepted', desc: 'Maid confirmed visit' },
-  { key: 'en_route', label: 'En Route', desc: 'Heading to your doorstep' },
-  { key: 'arrived', label: 'Arrived', desc: 'Helper at your door / gate' },
+  { key: 'requested', label: 'Requested', desc: 'Booking received' },
+  { key: 'accepted', label: 'Accepted', desc: 'Maid assigned in Pune' },
+  { key: 'en_route', label: 'En Route', desc: 'Traveling to your doorstep' },
+  { key: 'arrived', label: 'Arrived', desc: 'Maid at your door / gate' },
   { key: 'in_progress', label: 'In Progress', desc: 'Working at your home' },
-  { key: 'completed', label: 'Completed', desc: 'Task verified & completed' }
+  { key: 'completed', label: 'Completed', desc: 'Task verified & done' }
 ];
 
 export default function BookingTracker() {
@@ -27,6 +27,24 @@ export default function BookingTracker() {
     maids,
     liveGpsData 
   } = useApp();
+
+  // Local animated progress state for super smooth real-time visual movement
+  const [animatedProgress, setAnimatedProgress] = useState(30);
+  const [simulatedEta, setSimulatedEta] = useState(16);
+  const [simulatedSpeed, setSimulatedSpeed] = useState(26);
+
+  // Auto-tick GPS progress every 2 seconds
+  useEffect(() => {
+    if (!isBookingTrackerOpen) return;
+
+    const ticker = setInterval(() => {
+      setAnimatedProgress(prev => (prev >= 98 ? 98 : prev + 3));
+      setSimulatedEta(prev => Math.max(1, prev - 1));
+      setSimulatedSpeed(24 + Math.floor(Math.random() * 8));
+    }, 2500);
+
+    return () => clearInterval(ticker);
+  }, [isBookingTrackerOpen]);
 
   if (!isBookingTrackerOpen) return null;
 
@@ -43,9 +61,9 @@ export default function BookingTracker() {
   };
 
   const handleCallMaid = (maidId) => {
-    const targetMaid = maids.find(m => m.id === maidId) || {
+    const targetMaid = maids.find(m => m.id === maidId) || maids[0] || {
       id: maidId,
-      name: "Assigned Helper",
+      name: "Pune Helper",
       phone: "+91 98234 11201",
       whatsapp: "919823411201",
       avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300"
@@ -54,8 +72,8 @@ export default function BookingTracker() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
-      <div className="relative w-full max-w-3xl glass-panel rounded-3xl p-6 sm:p-8 border border-white/10 shadow-2xl overflow-y-auto max-h-[90vh] text-slate-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md animate-fadeIn">
+      <div className="relative w-full max-w-3xl glass-panel rounded-3xl p-5 sm:p-8 border border-white/15 shadow-2xl overflow-y-auto max-h-[92vh] text-slate-100">
         
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-slate-800">
@@ -66,15 +84,15 @@ export default function BookingTracker() {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl sm:text-2xl font-black font-heading text-white">
-                  Live Doorstep GPS Tracker
+                  Live Doorstep GPS Radar
                 </h2>
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold uppercase flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                  Real-Time Active
+                  Pune Live Active
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Live location telemetry, countdown ETA & secure doorstep OTP verification
+                Real-time vehicle telemetry, countdown ETA & secure doorstep OTP verification
               </p>
             </div>
           </div>
@@ -88,32 +106,29 @@ export default function BookingTracker() {
         </div>
 
         {/* Bookings List */}
-        <div className="mt-6 space-y-6">
+        <div className="mt-5 space-y-6">
           {bookings.length === 0 ? (
             <div className="text-center py-12 text-slate-400">
               <Sparkles className="w-10 h-10 text-slate-600 mx-auto mb-3" />
               <p className="text-sm">No active bookings currently.</p>
-              <p className="text-xs text-slate-500 mt-1">Book an available maid from the catalog to track live arrival.</p>
+              <p className="text-xs text-slate-500 mt-1">Book an available maid in Pune to track live arrival.</p>
             </div>
           ) : (
             bookings.map((b) => {
               const currentStepIndex = STATUS_STEPS.findIndex(s => s.key === b.status);
               const gps = liveGpsData[b.id];
-              const remainingEta = gps ? gps.etaRemainingMins : (b.etaRemainingMins || 18);
+              const remainingEta = gps ? gps.etaRemainingMins : simulatedEta;
               const isMoving = b.status === 'en_route' || b.status === 'accepted';
 
               return (
                 <div
                   key={b.id}
-                  className="p-5 sm:p-6 rounded-3xl bg-slate-900/90 border border-slate-800 space-y-5 shadow-2xl relative overflow-hidden"
+                  className="p-5 sm:p-6 rounded-3xl bg-slate-900/95 border border-slate-800 space-y-4 shadow-2xl relative overflow-hidden"
                 >
-                  {/* Subtle Top Glow depending on state */}
-                  <div className={`absolute top-0 left-0 right-0 h-1 ${
-                    b.status === 'completed' ? 'bg-emerald-500' : 'bg-gradient-to-r from-cyan-500 via-emerald-500 to-indigo-500'
-                  }`} />
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 via-emerald-500 to-indigo-500" />
 
                   {/* Top Details & ID */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800/80">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -123,9 +138,9 @@ export default function BookingTracker() {
                           {b.serviceType}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-                        <MapPin className="w-3.5 h-3.5 text-rose-400" />
-                        <span>{b.address}</span>
+                      <div className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                        <span>{b.address || 'Kothrud / Wakad, Pune'}</span>
                       </div>
                     </div>
 
@@ -137,63 +152,62 @@ export default function BookingTracker() {
                     </div>
                   </div>
 
-                  {/* Simulated Live GPS Map Visualizer */}
+                  {/* Live GPS Radar Graphic */}
                   {isMoving && (
-                    <div className="p-4 rounded-2xl bg-slate-950/80 border border-cyan-500/30 relative overflow-hidden">
+                    <div className="p-4 rounded-2xl bg-slate-950/90 border border-cyan-500/30 relative overflow-hidden">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <Navigation className="w-4 h-4 text-cyan-400 animate-pulse" />
-                          <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Live GPS Dispatch Radar</span>
+                          <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Live Pune Dispatch Route</span>
                         </div>
                         <div className="flex items-center gap-3 text-xs">
                           <span className="flex items-center gap-1 text-slate-400">
                             <Gauge className="w-3.5 h-3.5 text-amber-400" />
-                            <span>{gps?.speedKmH || 24} km/h</span>
+                            <span>{gps?.speedKmH || simulatedSpeed} km/h</span>
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-bold">
+                          <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono font-bold animate-pulse">
                             ETA: {remainingEta} mins
                           </span>
                         </div>
                       </div>
 
-                      {/* Map Graphic Canvas */}
-                      <div className="relative h-28 bg-slate-900/90 rounded-xl border border-slate-800 flex items-center justify-between px-8 overflow-hidden">
-                        {/* Road Line */}
-                        <div className="absolute left-10 right-10 top-1/2 h-1 bg-slate-800 -translate-y-1/2 rounded-full overflow-hidden">
+                      {/* Map Track Graphic */}
+                      <div className="relative h-24 bg-slate-900/90 rounded-xl border border-slate-800 flex items-center justify-between px-6 sm:px-10 overflow-hidden">
+                        {/* Route Line */}
+                        <div className="absolute left-10 right-10 top-1/2 h-1.5 bg-slate-800 -translate-y-1/2 rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-gradient-to-r from-cyan-500 to-emerald-500 transition-all duration-1000"
-                            style={{ width: `${Math.min(100, Math.max(10, (1 - remainingEta / 20) * 100))}%` }}
+                            className="h-full bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 transition-all duration-1000"
+                            style={{ width: `${animatedProgress}%` }}
                           />
                         </div>
 
-                        {/* Maid Origin / Current Marker */}
-                        <div className="z-10 flex flex-col items-center">
-                          <div className="w-10 h-10 rounded-2xl bg-cyan-500 text-slate-950 flex items-center justify-center font-bold shadow-lg shadow-cyan-500/30 animate-bounce">
+                        {/* Moving Vehicle */}
+                        <div 
+                          className="z-10 flex flex-col items-center transition-all duration-1000"
+                          style={{ marginLeft: `${Math.min(75, animatedProgress * 0.75)}%` }}
+                        >
+                          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-cyan-500 to-teal-400 text-slate-950 flex items-center justify-center font-bold shadow-lg shadow-cyan-500/40 animate-bounce">
                             🚗
                           </div>
-                          <span className="text-[10px] font-bold text-cyan-300 mt-1">{b.maidName}</span>
-                          <span className="text-[9px] text-slate-400 font-mono">
-                            {gps ? `${gps.lat}, ${gps.lng}` : '12.9716, 77.6412'}
-                          </span>
+                          <span className="text-[10px] font-bold text-cyan-300 mt-1 whitespace-nowrap">{b.maidName}</span>
+                          <span className="text-[8px] text-slate-400 font-mono">En route in Pune</span>
                         </div>
 
-                        {/* Customer Doorstep Destination */}
+                        {/* Customer Doorstep */}
                         <div className="z-10 flex flex-col items-center">
-                          <div className="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center font-bold shadow-lg shadow-rose-500/30">
+                          <div className="w-9 h-9 rounded-2xl bg-rose-500 text-white flex items-center justify-center font-bold shadow-lg shadow-rose-500/30">
                             🏠
                           </div>
-                          <span className="text-[10px] font-bold text-rose-300 mt-1">Your Doorstep</span>
-                          <span className="text-[9px] text-slate-400 font-mono">12.9784, 77.6408</span>
+                          <span className="text-[10px] font-bold text-rose-300 mt-1 whitespace-nowrap">Your Pune Doorstep</span>
+                          <span className="text-[8px] text-slate-400 font-mono">Destination</span>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Assigned Maid Contact Strip & Doorstep OTP */}
+                  {/* Maid Info & Security OTP */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    
-                    {/* Maid Info */}
-                    <div className="flex items-center justify-between bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
+                    <div className="flex items-center justify-between bg-slate-950/60 p-3 rounded-2xl border border-slate-800">
                       <div className="flex items-center gap-3">
                         <img 
                           src={b.maidAvatar || "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300"} 
@@ -201,7 +215,7 @@ export default function BookingTracker() {
                           className="w-11 h-11 rounded-2xl object-cover border border-emerald-500/40"
                         />
                         <div>
-                          <div className="text-[11px] text-slate-400">Assigned Helper</div>
+                          <div className="text-[11px] text-slate-400">Assigned Pune Helper</div>
                           <div className="text-sm font-bold text-white flex items-center gap-1">
                             <span>{b.maidName}</span>
                             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
@@ -213,7 +227,7 @@ export default function BookingTracker() {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => handleCallMaid(b.maidId)}
-                          className="p-2.5 rounded-xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition shadow-md shadow-emerald-500/20"
+                          className="p-2.5 rounded-xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition shadow"
                           title="Call Maid"
                         >
                           <PhoneCall className="w-4 h-4" />
@@ -231,7 +245,7 @@ export default function BookingTracker() {
                     </div>
 
                     {/* Doorstep Verification OTP */}
-                    <div className="flex items-center justify-between bg-emerald-950/30 p-3.5 rounded-2xl border border-emerald-500/30">
+                    <div className="flex items-center justify-between bg-emerald-950/30 p-3 rounded-2xl border border-emerald-500/30">
                       <div className="flex items-center gap-2.5">
                         <KeyRound className="w-5 h-5 text-emerald-400" />
                         <div>
@@ -244,12 +258,11 @@ export default function BookingTracker() {
                         {b.otp || '4829'}
                       </div>
                     </div>
-
                   </div>
 
-                  {/* Live Progress Stepper */}
+                  {/* Pipeline Stepper */}
                   <div>
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center justify-between">
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center justify-between">
                       <span>Live Dispatch Pipeline</span>
                       {b.status === 'arrived' && (
                         <span className="text-emerald-400 font-bold animate-pulse flex items-center gap-1">
@@ -277,7 +290,7 @@ export default function BookingTracker() {
                             >
                               {idx + 1}
                             </div>
-                            <span className={`text-[10px] sm:text-[11px] font-bold mt-1.5 truncate max-w-full ${
+                            <span className={`text-[9px] sm:text-[11px] font-bold mt-1.5 truncate max-w-full ${
                               isCurrent ? 'text-emerald-300' : isPast ? 'text-slate-200' : 'text-slate-500'
                             }`}>
                               {step.label}
@@ -288,9 +301,9 @@ export default function BookingTracker() {
                     </div>
                   </div>
 
-                  {/* Advance live dispatch state */}
-                  <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-800 text-xs">
-                    <span className="text-slate-400 text-[11px]">Simulate dispatch event:</span>
+                  {/* Manual Dispatch Simulator Buttons */}
+                  <div className="flex items-center justify-between gap-2 pt-2.5 border-t border-slate-800 text-xs">
+                    <span className="text-slate-400 text-[11px]">Advance live state:</span>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <button
                         onClick={() => handleUpdateStatus(b.id, 'en_route')}
