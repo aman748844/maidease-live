@@ -1,5 +1,24 @@
 [
   {
+    "id": "BK-7390",
+    "maidId": "maid_1",
+    "maidName": "Sunita Devi",
+    "maidAvatar": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&auto=format&fit=crop&q=80",
+    "maidPhone": "+91 98234 11201",
+    "customerName": "Rahul Sharma",
+    "customerPhone": "+91 98765 43210",
+    "address": "Flat 304, Green Glen Heights, Indiranagar, Bengaluru",
+    "serviceType": "Deep House Cleaning & Cooking",
+    "frequency": "instant",
+    "scheduledTime": "Immediately (Within 20 mins)",
+    "status": "accepted",
+    "totalAmount": 349,
+    "paymentMethod": "Cash after service",
+    "createdAt": "2026-09-09T16:47:59.890Z",
+    "etaRemainingMins": 20,
+    "notes": "Please bring basic surface cleaner if possible."
+  },
+  {
     "id": "BK-7717",
     "maidId": "maid_1",
     "maidName": "Sunita Devi",
