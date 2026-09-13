@@ -19,6 +19,9 @@ frontend/dist/
 
 # Environment Variables
 .env
+*.env
+backend/.env
+frontend/.env
 .env.local
 .env.*.local
 
@@ -27,3 +30,5 @@ frontend/dist/
 Thumbs.db
 .vscode/
 .idea/
+Microsoft/
+backend/Microsoft/

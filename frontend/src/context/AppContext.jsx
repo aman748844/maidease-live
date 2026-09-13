@@ -21,6 +21,10 @@ export function AppProvider({ children }) {
   const [isPriceCalculatorOpen, setIsPriceCalculatorOpen] = useState(false);
   const [isBookingTrackerOpen, setIsBookingTrackerOpen] = useState(false);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+  const [isVLMScannerOpen, setIsVLMScannerOpen] = useState(false);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [quoteTargetMaid, setQuoteTargetMaid] = useState(null);
+  const [selectedLocality, setSelectedLocality] = useState('All Pune');
   const [activePartnerMaidId, setActivePartnerMaidId] = useState('maid_pune_1'); // Sunita Shinde
 
   // Live Real-Time Telemetry & GPS State
@@ -189,6 +193,14 @@ export function AppProvider({ children }) {
         setIsBookingTrackerOpen,
         isAIAssistantOpen,
         setIsAIAssistantOpen,
+        isVLMScannerOpen,
+        setIsVLMScannerOpen,
+        isQuoteModalOpen,
+        setIsQuoteModalOpen,
+        quoteTargetMaid,
+        setQuoteTargetMaid,
+        selectedLocality,
+        setSelectedLocality,
         activePartnerMaidId,
         setActivePartnerMaidId,
         toggleMaidStatus,

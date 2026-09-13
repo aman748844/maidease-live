@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   Sparkles, PhoneCall, Calculator, Clock, UserCheck, 
-  ShieldCheck, MapPin, RefreshCw, Layers, Bot, Zap, Wifi, Smartphone, Check 
+  ShieldCheck, MapPin, RefreshCw, Layers, Bot, Zap, Wifi, Smartphone, Check, Eye 
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -18,6 +18,7 @@ export default function Navbar() {
     setIsPriceCalculatorOpen, 
     setIsBookingTrackerOpen,
     setIsAIAssistantOpen,
+    setIsVLMScannerOpen,
     isRealtimeConnected,
     loadMaids,
     loading
@@ -82,30 +83,24 @@ export default function Navbar() {
           {/* Action Buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
             
-            {/* My Phone Number Config Button */}
+            {/* AI Photo Scanner (VLM) Trigger Button */}
             <button
-              onClick={() => setIsPhoneModalOpen(true)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition ${
-                userPhoneNumber 
-                  ? 'bg-emerald-950/70 border-emerald-500/40 text-emerald-300' 
-                  : 'bg-slate-800/80 hover:bg-slate-700/80 border-slate-700 text-slate-300'
-              }`}
-              title="Set your phone number to receive real calls"
+              onClick={() => setIsVLMScannerOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 hover:opacity-95 text-white shadow-lg shadow-purple-500/30 border border-purple-400/40 transition transform hover:scale-105 active:scale-95"
+              title="Scan kitchen or room photo with Multimodal Vision AI"
             >
-              <Smartphone className="w-4 h-4 text-emerald-400" />
-              <span className="hidden md:inline">
-                {userPhoneNumber ? userPhoneNumber : "My Phone"}
-              </span>
+              <Eye className="w-4 h-4 text-cyan-200 animate-pulse" />
+              <span className="hidden sm:inline">AI Photo Scanner</span>
+              <span className="px-1.5 py-0.2 bg-white/20 text-[9px] rounded-full uppercase tracking-widest font-extrabold hidden md:inline">VLM</span>
             </button>
 
             {/* AI Agent Sakhi Button */}
             <button
               onClick={() => setIsAIAssistantOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-purple-600/90 to-indigo-600/90 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/25 border border-purple-400/30 transition transform hover:scale-105"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-slate-800/90 hover:bg-slate-700 text-purple-300 border border-purple-500/30 transition shadow"
             >
-              <Bot className="w-4 h-4 text-purple-200 animate-pulse" />
+              <Bot className="w-4 h-4 text-purple-400 animate-pulse" />
               <span>AI Sakhi</span>
-              <span className="px-1.5 py-0.2 bg-white/20 text-[9px] rounded-full uppercase tracking-widest hidden md:inline">Agent</span>
             </button>
 
             {/* Price Estimator Button */}

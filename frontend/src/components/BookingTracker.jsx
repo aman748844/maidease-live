@@ -75,6 +75,7 @@ export default function BookingTracker() {
       whatsapp: "919823411201",
       avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300"
     };
+    showToast(`Connecting direct call with ${targetMaid.name}...`, 'info');
     setSelectedMaidForCall(targetMaid);
   };
 

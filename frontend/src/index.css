@@ -127,3 +127,25 @@ h1, h2, h3, h4, .font-heading {
   pointer-events: none;
   filter: blur(40px);
 }
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Shimmer scanline effect for VLM scanner */
+@keyframes vlmLaser {
+  0% { transform: translateY(0%); opacity: 0.8; }
+  50% { transform: translateY(1000%); opacity: 1; }
+  100% { transform: translateY(0%); opacity: 0.8; }
+}
+
+.laser-scanner {
+  animation: vlmLaser 3s ease-in-out infinite;
+}

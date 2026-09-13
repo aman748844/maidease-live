@@ -1,19 +1,44 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Search, SlidersHorizontal, Sparkles, MapPin, X } from 'lucide-react';
+import { 
+  Search, SlidersHorizontal, Sparkles, MapPin, X, 
+  ShieldCheck, Zap, Flame, CheckCircle2, ChevronRight, Eye 
+} from 'lucide-react';
 
-const SERVICE_CATEGORIES = [
-  { id: 'all', label: 'All Services', icon: '✨' },
-  { id: 'cooking', label: 'Cooking & Meals', icon: '🍳' },
-  { id: 'cleaning', label: 'Deep House Cleaning', icon: '🧹' },
-  { id: 'dishwashing', label: 'Dishwashing (Bartan)', icon: '🍽️' },
-  { id: 'babysitting', label: 'Babysitting & Nanny', icon: '👶' },
-  { id: 'elderlyCare', label: 'Elderly Care', icon: '👵' },
-  { id: 'laundry', label: 'Laundry & Ironing', icon: '🧺' },
+const JUSTDIAL_CATEGORIES = [
+  { id: 'all', label: 'All Services', subtitle: '6+ verified chores', icon: '✨', badge: 'Popular' },
+  { id: 'cooking', label: 'Cooks & Chefs', subtitle: 'Gol Chapati & Maharashtrian', icon: '🍳', badge: 'High Demand' },
+  { id: 'cleaning', label: 'House Cleaning', subtitle: 'Mopping & Deep Dusting', icon: '🧹', badge: 'Instant' },
+  { id: 'dishwashing', label: 'Bartan & Sink', subtitle: 'Sparkling Utensils', icon: '🍽️', badge: 'Fast' },
+  { id: 'babysitting', label: 'Babysitter & Aya', subtitle: 'Childcare & Infant feeding', icon: '👶', badge: 'Verified' },
+  { id: 'elderlyCare', label: 'Elderly Care', subtitle: 'Patient & Companion Care', icon: '👵', badge: 'Trusted' },
+  { id: 'laundry', label: '24hr Full-Time', subtitle: 'Live-in / Full Day Domestic', icon: '🏡', badge: 'Monthly' },
+];
+
+const PUNE_LOCALITIES = [
+  'All Pune', 'Kothrud', 'Baner', 'Hinjawadi', 'Viman Nagar', 'Wakad', 'Hadapsar', 'Kalyani Nagar'
+];
+
+const TRENDING_TAGS = [
+  { label: 'Gol Chapati Cook', query: 'chapati cook' },
+  { label: 'Bathroom Acid Scrub', query: 'bathroom' },
+  { label: 'Arrives in 15 mins', query: 'available' },
+  { label: 'Police Verified Helpers', query: 'verified' },
+  { label: 'Indiranagar / Kothrud Flat', query: 'kothrud' }
 ];
 
 export default function SearchAndFilters() {
-  const { filters, setFilters, availableCount, maids } = useApp();
+  const { 
+    filters, 
+    setFilters, 
+    availableCount, 
+    maids, 
+    selectedLocality, 
+    setSelectedLocality,
+    setIsVLMScannerOpen,
+    setIsQuoteModalOpen,
+    setQuoteTargetMaid
+  } = useApp();
 
   const handleServiceChange = (serviceId) => {
     setFilters(prev => ({ ...prev, service: serviceId }));
@@ -23,166 +48,207 @@ export default function SearchAndFilters() {
     setFilters(prev => ({ ...prev, status }));
   };
 
-  const handleSearchChange = (e) => {
-    setFilters(prev => ({ ...prev, search: e.target.value }));
+  const handleLocalitySelect = (loc) => {
+    setSelectedLocality(loc);
+    if (loc === 'All Pune') {
+      setFilters(prev => ({ ...prev, search: '' }));
+    } else {
+      setFilters(prev => ({ ...prev, search: loc }));
+    }
   };
 
-  const handleDistanceChange = (e) => {
-    setFilters(prev => ({ ...prev, maxDistance: Number(e.target.value) }));
-  };
-
-  const handleResetFilters = () => {
-    setFilters({
-      search: '',
-      service: 'all',
-      status: 'all',
-      maxDistance: 5,
-      maxPrice: 300
-    });
+  const handleApplyTrendingTag = (tag) => {
+    if (tag.query === 'available') {
+      setFilters(prev => ({ ...prev, status: 'available', search: '' }));
+    } else {
+      setFilters(prev => ({ ...prev, search: tag.query }));
+    }
   };
 
   return (
-    <div id="maid-catalog" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="glass-panel p-5 sm:p-6 rounded-3xl space-y-5">
+    <div id="maid-catalog" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6">
+      
+      {/* -------------------------------------------------------------
+          1. JUSTDIAL-STYLE HERO SEARCH & LOCALITY SELECTOR
+      -------------------------------------------------------------- */}
+      <div className="glass-panel p-5 sm:p-7 rounded-3xl space-y-5 border border-white/15 shadow-2xl relative overflow-hidden">
         
-        {/* Top Search & Live Status Bar */}
-        <div className="flex flex-col md:flex-row items-center gap-4">
-          {/* Search Input */}
-          <div className="relative flex-1 w-full">
+        {/* Glow Accent */}
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+          
+          {/* Pune Locality Dropdown Pill */}
+          <div className="flex items-center gap-2 px-3.5 py-3 rounded-2xl bg-slate-900 border border-slate-700 md:w-56 shrink-0">
+            <MapPin className="w-4 h-4 text-rose-400 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] uppercase font-bold text-slate-400 block leading-tight">Location</span>
+              <select
+                value={selectedLocality}
+                onChange={(e) => handleLocalitySelect(e.target.value)}
+                className="bg-transparent text-white font-bold text-xs outline-none w-full cursor-pointer"
+              >
+                {PUNE_LOCALITIES.map((loc) => (
+                  <option key={loc} value={loc} className="bg-slate-900 text-white">
+                    📍 {loc}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Main Justdial Search Input */}
+          <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
             <input
               type="text"
               value={filters.search}
-              onChange={handleSearchChange}
-              placeholder="Search by maid name, cuisine, chore (e.g. Cook, Cleaning, Nanny, Indiranagar)..."
-              className="w-full pl-12 pr-10 py-3.5 rounded-2xl glass-input text-sm placeholder:text-slate-500 focus:border-emerald-400 transition-all"
+              onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+              placeholder="Search maids, cooks, housekeepers (e.g. Chapati Cook, Dishwashing, Kothrud, Baner)..."
+              className="w-full pl-12 pr-10 py-3.5 rounded-2xl bg-slate-900/90 border border-slate-700 text-sm text-white placeholder:text-slate-500 focus:border-emerald-400 outline-none transition"
             />
             {filters.search && (
               <button
                 onClick={() => setFilters(prev => ({ ...prev, search: '' }))}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
 
-          {/* Real-time Status Filter Pills */}
-          <div className="flex items-center gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+          {/* AI VLM Quick Trigger */}
+          <button
+            onClick={() => setIsVLMScannerOpen(true)}
+            className="px-4 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 text-white font-bold text-xs shadow-lg shadow-purple-500/25 flex items-center justify-center gap-2 hover:opacity-95 transition transform hover:scale-[1.02] shrink-0 active:scale-95"
+          >
+            <Eye className="w-4 h-4 animate-pulse" />
+            <span>AI Photo Scanner (VLM)</span>
+          </button>
+        </div>
+
+        {/* Locality Quick Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
+          <span className="text-[11px] font-semibold text-slate-400 shrink-0 mr-1">Popular Localities:</span>
+          {PUNE_LOCALITIES.map((loc) => (
             <button
-              onClick={() => handleStatusChange('all')}
-              className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                filters.status === 'all'
-                  ? 'bg-slate-700 text-white shadow-md'
-                  : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 border border-slate-800'
+              key={loc}
+              onClick={() => handleLocalitySelect(loc)}
+              className={`px-3 py-1 rounded-xl text-xs font-semibold whitespace-nowrap transition border ${
+                selectedLocality === loc
+                  ? 'bg-emerald-500 text-slate-950 border-emerald-400 font-bold shadow-md'
+                  : 'bg-slate-900/70 text-slate-300 border-slate-800 hover:border-slate-700'
               }`}
             >
-              All Maids ({maids.length})
+              {loc}
+            </button>
+          ))}
+        </div>
+
+        {/* -------------------------------------------------------------
+            2. JUSTDIAL ICONIC SERVICE CATEGORY TILES
+        -------------------------------------------------------------- */}
+        <div>
+          <div className="flex items-center justify-between mb-3 text-xs">
+            <span className="font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <span>Explore Verified Home Chores</span>
+              <span className="px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                JD Verified
+              </span>
+            </span>
+            <span className="text-slate-400 text-[11px]">Click to filter catalog</span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5">
+            {JUSTDIAL_CATEGORIES.map((cat) => {
+              const isActive = filters.service === cat.id;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => handleServiceChange(cat.id)}
+                  className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all duration-200 group relative overflow-hidden ${
+                    isActive
+                      ? 'bg-gradient-to-tr from-emerald-950/80 to-teal-900/60 border-emerald-400 ring-2 ring-emerald-500/30 shadow-lg shadow-emerald-500/20 scale-[1.02]'
+                      : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-800/80'
+                  }`}
+                >
+                  <div className="flex items-start justify-between w-full">
+                    <span className="text-2xl sm:text-3xl mb-1.5 group-hover:scale-110 transition-transform">
+                      {cat.icon}
+                    </span>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-md ${
+                      isActive ? 'bg-emerald-400 text-slate-950' : 'bg-slate-800 text-slate-400'
+                    }`}>
+                      {cat.badge}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h4 className={`text-xs font-bold truncate ${isActive ? 'text-white' : 'text-slate-200'}`}>
+                      {cat.label}
+                    </h4>
+                    <p className="text-[10px] text-slate-400 truncate mt-0.5">
+                      {cat.subtitle}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* -------------------------------------------------------------
+            3. TRENDING SEARCHES & REAL-TIME AVAILABILITY SWITCHES
+        -------------------------------------------------------------- */}
+        <div className="pt-3 border-t border-slate-800/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+          
+          {/* Trending Chips */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="flex items-center gap-1 text-[11px] font-bold text-amber-400">
+              <Flame className="w-3.5 h-3.5" />
+              <span>Trending:</span>
+            </span>
+            {TRENDING_TAGS.map((t, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleApplyTrendingTag(t)}
+                className="px-2.5 py-1 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-[11px] border border-slate-700 transition"
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Real-time Status Buttons */}
+          <div className="flex items-center gap-1.5 self-end md:self-auto">
+            <button
+              onClick={() => handleStatusChange('all')}
+              className={`px-3 py-1.5 rounded-xl font-bold transition ${
+                filters.status === 'all'
+                  ? 'bg-slate-700 text-white'
+                  : 'bg-slate-900 text-slate-400 border border-slate-800'
+              }`}
+            >
+              All ({maids.length})
             </button>
 
             <button
               onClick={() => handleStatusChange('available')}
-              className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+              className={`px-3 py-1.5 rounded-xl font-bold flex items-center gap-1.5 transition ${
                 filters.status === 'available'
-                  ? 'bg-emerald-500 text-slate-950 font-extrabold shadow-lg shadow-emerald-500/20'
-                  : 'bg-emerald-950/40 text-emerald-300 hover:bg-emerald-900/40 border border-emerald-500/30'
+                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
+                  : 'bg-emerald-950/40 text-emerald-300 border border-emerald-500/30'
               }`}
             >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-              </span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>Available Now ({availableCount})</span>
             </button>
-
-            <button
-              onClick={() => handleStatusChange('busy')}
-              className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                filters.status === 'busy'
-                  ? 'bg-amber-500 text-slate-950 shadow-md'
-                  : 'bg-amber-950/40 text-amber-300 hover:bg-amber-900/40 border border-amber-500/30'
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-              <span>Busy</span>
-            </button>
-
-            <button
-              onClick={() => handleStatusChange('offline')}
-              className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-                filters.status === 'offline'
-                  ? 'bg-slate-600 text-white shadow-md'
-                  : 'bg-slate-900/60 text-slate-500 hover:text-slate-300 border border-slate-800'
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-slate-500"></span>
-              <span>Offline</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Service Category Buttons */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-          {SERVICE_CATEGORIES.map(cat => {
-            const isSelected = filters.service.toLowerCase() === cat.id.toLowerCase();
-            return (
-              <button
-                key={cat.id}
-                onClick={() => handleServiceChange(cat.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap ${
-                  isSelected
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20 transform scale-[1.02]'
-                    : 'bg-slate-800/70 hover:bg-slate-700/70 text-slate-300 border border-slate-700/80 hover:border-emerald-500/40'
-                }`}
-              >
-                <span>{cat.icon}</span>
-                <span>{cat.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Secondary Filters Bar: Distance & Clear */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-slate-800/80 text-xs text-slate-400">
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-3.5 h-3.5 text-emerald-400" />
-              <span>Max Distance: <strong className="text-white font-semibold">{filters.maxDistance} km</strong></span>
-              <input
-                type="range"
-                min="1"
-                max="10"
-                step="0.5"
-                value={filters.maxDistance}
-                onChange={handleDistanceChange}
-                className="w-24 sm:w-32 accent-emerald-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer"
-              />
-            </div>
-
-            <div className="flex items-center gap-2">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Max Rate: <strong className="text-white font-semibold">₹{filters.maxPrice}/hr</strong></span>
-              <input
-                type="range"
-                min="100"
-                max="400"
-                step="20"
-                value={filters.maxPrice}
-                onChange={(e) => setFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
-                className="w-24 sm:w-32 accent-cyan-500 h-1.5 bg-slate-700 rounded-lg cursor-pointer"
-              />
-            </div>
           </div>
 
-          <button
-            onClick={handleResetFilters}
-            className="text-slate-400 hover:text-emerald-400 font-semibold underline underline-offset-4 transition-colors"
-          >
-            Reset All Filters
-          </button>
         </div>
 
       </div>
+
     </div>
   );
 }

@@ -12,6 +12,8 @@ import BookingTracker from './components/BookingTracker';
 import PartnerDashboard from './components/PartnerDashboard';
 import SafetyBadges from './components/SafetyBadges';
 import AIAgentAssistant from './components/AIAgentAssistant';
+import VLMJobScannerModal from './components/VLMJobScannerModal';
+import InstantQuoteModal from './components/InstantQuoteModal';
 import { Sparkles, AlertCircle, RefreshCw, Bot } from 'lucide-react';
 
 export default function App() {
@@ -120,11 +122,14 @@ export default function App() {
 
       {/* Global Modals */}
       <AIAgentAssistant />
-      <DirectCallModal />
+      <VLMJobScannerModal />
+      <InstantQuoteModal />
       <InstantBookingModal />
       <MaidProfileModal />
       <PriceCalculatorModal />
       <BookingTracker />
+      {/* Direct Call has topmost layer priority */}
+      <DirectCallModal />
 
     </div>
   );

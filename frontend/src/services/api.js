@@ -134,5 +134,34 @@ export const api = {
     });
     if (!res.ok) throw new Error('Failed to get AI call voice reply');
     return res.json();
+  },
+
+  // AI Agent: Get available AI models
+  async getAIModels() {
+    const res = await fetch(`${API_BASE}/ai/models`);
+    if (!res.ok) throw new Error('Failed to fetch AI models');
+    return res.json();
+  },
+
+  // AI Agent 3: Multimodal Vision-Language Model (VLM) Image Analyzer
+  async analyzeRoomPhoto(data) {
+    const res = await fetch(`${API_BASE}/ai/vision-estimate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to analyze room photo with VLM');
+    return res.json();
+  },
+
+  // AI Agent 4: Justdial-Style Instant Custom Quote
+  async getInstantQuote(data) {
+    const res = await fetch(`${API_BASE}/ai/instant-quote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to fetch instant quote');
+    return res.json();
   }
 };
