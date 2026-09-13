@@ -1269,6 +1269,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Serve frontend static production build if available (Unified fullstack deployment)
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+if (fs.existsSync(frontendDistPath)) {
+  app.use(express.static(frontendDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
+  });
+}
+
 const server = app.listen(PORT, () => {
   console.log(`🚀 MaidEase Live Backend running at http://localhost:${PORT}`);
   console.log(`⚡ WebRTC Signaling & Real-Time SSE active`);

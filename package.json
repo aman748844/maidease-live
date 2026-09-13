@@ -1,0 +1,13 @@
+{
+  "name": "maidease-live",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MaidEase Live - Real-time AI domestic maid booking and calling marketplace",
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "build": "npm --prefix frontend install && npm --prefix frontend run build && npm --prefix backend install",
+    "start": "node backend/index.js",
+    "dev:backend": "node backend/index.js",
+    "dev:frontend": "npm --prefix frontend run dev"
+  }
+}
