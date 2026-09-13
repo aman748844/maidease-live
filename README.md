@@ -6,6 +6,8 @@
 ![Vite](https://img.shields.io/badge/Vite-5.1-646CFF?logo=vite)
 ![Status](https://img.shields.io/badge/Status-Active%20Production%20Ready-success)
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/aman748844/maidease-live)
+
 > **MaidEase Live** is a full-stack, real-time home service and domestic help booking platform. It enables users to browse verified maids, check live availability, estimate custom service packages (BHK, cooking, cleaning, child care), initiate simulated direct calling, and track instant bookings in real time.
 
 ---
