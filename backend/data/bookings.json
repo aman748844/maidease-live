@@ -11,7 +11,7 @@
     "serviceType": "Deep House Cleaning & Cooking",
     "frequency": "instant",
     "scheduledTime": "Immediately (Within 20 mins)",
-    "status": "arrived",
+    "status": "en_route",
     "otp": "5554",
     "totalAmount": 399,
     "paymentMethod": "Cash after service",
