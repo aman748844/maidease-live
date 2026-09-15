@@ -3,30 +3,37 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 
-// Auto-load backend/.env configuration file if present
-const envFilePath = path.join(__dirname, '.env');
-if (fs.existsSync(envFilePath)) {
-  try {
-    const rawEnv = fs.readFileSync(envFilePath, 'utf8');
-    rawEnv.split(/\r?\n/).forEach(line => {
-      const trimmed = line.trim();
-      if (trimmed && !trimmed.startsWith('#')) {
-        const eqIdx = trimmed.indexOf('=');
-        if (eqIdx !== -1) {
-          const k = trimmed.slice(0, eqIdx).trim();
-          let v = trimmed.slice(eqIdx + 1).trim();
-          if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
-            v = v.slice(1, -1);
+// Auto-load backend/.env and root .env configuration files if present
+const envFiles = [
+  path.join(__dirname, '.env'),
+  path.join(__dirname, '..', '.env')
+];
+for (const envFilePath of envFiles) {
+  if (fs.existsSync(envFilePath)) {
+    try {
+      const rawEnv = fs.readFileSync(envFilePath, 'utf8');
+      rawEnv.split(/\r?\n/).forEach(line => {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith('#')) {
+          const eqIdx = trimmed.indexOf('=');
+          if (eqIdx !== -1) {
+            const k = trimmed.slice(0, eqIdx).trim();
+            let v = trimmed.slice(eqIdx + 1).trim();
+            if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+              v = v.slice(1, -1);
+            }
+            if (v && !process.env[k]) process.env[k] = v;
           }
-          if (v) process.env[k] = v;
         }
-      }
-    });
-    console.log('✅ Loaded server environment variables from backend/.env');
-  } catch (e) {
-    console.warn('Could not parse .env:', e.message);
+      });
+      console.log(`✅ Loaded environment variables from ${envFilePath}`);
+    } catch (e) {
+      console.warn(`Could not parse ${envFilePath}:`, e.message);
+    }
   }
 }
+
+
 
 function isRealKey(val) {
   if (!val || typeof val !== 'string') return false;
@@ -36,11 +43,25 @@ function isRealKey(val) {
   return s.length > 12;
 }
 
+function isValidGeminiKey(val) {
+  if (!isRealKey(val)) return false;
+  const s = val.trim();
+  return s.startsWith('AIzaSy') && s.length >= 35;
+}
+
+function isValidGroqKey(val) {
+  if (!isRealKey(val)) return false;
+  const s = val.trim();
+  return (s.startsWith('gsk_') && s.length > 20) || s.length > 25;
+}
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
 app.use(cors());
-app.use(express.json());
+// 25MB limit to comfortably allow voice recording audio base64 and room photos
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
 const MAIDS_FILE = path.join(__dirname, 'data', 'maids.json');
 const BOOKINGS_FILE = path.join(__dirname, 'data', 'bookings.json');
@@ -598,6 +619,16 @@ async function resolveGroqModel(apiKey) {
       const available = (data.data || []).map(m => m.id);
       console.log('📋 [Discovered Live Groq Models]:', available);
 
+      const versatile = available.find(m => m.includes('llama-3.3') || m.includes('3.3-70b'));
+      if (versatile) {
+        cachedGroqModel = versatile;
+        return versatile;
+      }
+      const instant = available.find(m => m.includes('llama-3.1-8b') || m.includes('8b-instant'));
+      if (instant) {
+        cachedGroqModel = instant;
+        return instant;
+      }
       const llama = available.find(m => m.includes('llama') && !m.includes('guard') && !m.includes('whisper'));
       if (llama) {
         cachedGroqModel = llama;
@@ -612,16 +643,16 @@ async function resolveGroqModel(apiKey) {
   } catch (e) {
     console.warn('Could not query Groq models list:', e.message);
   }
-  return 'llama3-70b-8192';
+  return 'llama-3.3-70b-versatile';
 }
 
 // Google Gemini Flash (Multimodal & Fast Conversational - 100% Free on Google AI Studio)
 async function callGeminiFlash(prompt, systemInstruction = '', clientApiKey = '', preferredModel = '') {
   const apiKey = (clientApiKey || process.env.GEMINI_API_KEY || '').replace(/['"]/g, '').trim();
-  if (!apiKey) return null;
+  if (!apiKey || !isValidGeminiKey(apiKey)) return null;
 
   const resolved = await resolveGeminiModel(apiKey, preferredModel);
-  const modelsToTry = [resolved, 'gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash-latest'];
+  const modelsToTry = [resolved, 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
   const tried = new Set();
 
   const fullPrompt = systemInstruction 
@@ -700,12 +731,19 @@ async function callSarvamAI(prompt, systemInstruction = '', clientApiKey = '') {
 }
 
 // Groq Cloud AI Engine (Ultra-Fast Real-Time Inference, 100% Free Tier)
-async function callGroqFast(prompt, systemInstruction = '', clientApiKey = '') {
+async function callGroqFast(prompt, systemInstruction = '', clientApiKey = '', preferredModel = '') {
   const apiKey = (clientApiKey || process.env.GROQ_API_KEY || '').replace(/['"]/g, '').trim();
   if (!apiKey) return null;
 
   const resolved = await resolveGroqModel(apiKey);
-  const modelsToTry = [resolved, 'llama3-70b-8192', 'llama3-8b-8192', 'mixtral-8x7b-32768', 'llama-3.3-70b-versatile'];
+  const modelsToTry = [
+    resolved,
+    'qwen/qwen3.8-27b',
+    preferredModel && !preferredModel.includes('groq-llama') ? preferredModel : null,
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
+    'mixtral-8x7b-32768'
+  ].filter(Boolean);
   const tried = new Set();
 
   for (const model of modelsToTry) {
@@ -748,32 +786,99 @@ async function callGroqFast(prompt, systemInstruction = '', clientApiKey = '') {
   return null;
 }
 
+// AI Agent Voice Transcription: High-Speed Voice-to-Text via Groq Whisper API (100% Mobile & Desktop Compatible)
+app.post('/api/ai/transcribe', async (req, res) => {
+  try {
+    const { audio, mimeType = 'audio/webm', groqKey = '' } = req.body;
+    if (!audio) {
+      return res.status(400).json({ success: false, message: 'Audio payload is required' });
+    }
+
+    const apiKey = (groqKey || process.env.GROQ_API_KEY || '').replace(/['"]/g, '').trim();
+    if (!apiKey) {
+      return res.status(400).json({ success: false, message: 'Groq API key not configured. Please set GROQ_API_KEY.' });
+    }
+
+    const base64Data = audio.includes('base64,') ? audio.split('base64,')[1] : audio;
+    const audioBuffer = Buffer.from(base64Data, 'base64');
+
+    let ext = 'webm';
+    if (mimeType.includes('mp4') || mimeType.includes('m4a')) ext = 'm4a';
+    else if (mimeType.includes('wav')) ext = 'wav';
+    else if (mimeType.includes('ogg')) ext = 'ogg';
+    else if (mimeType.includes('mp3')) ext = 'mp3';
+
+    const formData = new FormData();
+    const audioBlob = new Blob([audioBuffer], { type: mimeType || 'audio/webm' });
+    formData.append('file', audioBlob, `speech.${ext}`);
+    formData.append('model', 'whisper-large-v3-turbo');
+    formData.append('temperature', '0.1');
+    formData.append('prompt', 'Namaste, Pune, chapati, bhakri, safai, jhadu, pocha, bartan, cooking, cleaning, Kothrud');
+
+    const whisperResponse = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: formData
+    });
+
+    if (whisperResponse.ok) {
+      const data = await whisperResponse.json();
+      console.log(`🎙️ [Groq Whisper Transcribed]: "${data.text}"`);
+      return res.json({ success: true, text: (data.text || '').trim() });
+    } else {
+      const errBody = await whisperResponse.text();
+      console.warn(`Groq Whisper transcription failed: HTTP ${whisperResponse.status}:`, errBody);
+
+      // Fallback to whisper-large-v3
+      const formDataFallback = new FormData();
+      formDataFallback.append('file', new Blob([audioBuffer], { type: mimeType || 'audio/webm' }), `speech.${ext}`);
+      formDataFallback.append('model', 'whisper-large-v3');
+      const fallbackResp = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}` },
+        body: formDataFallback
+      });
+      if (fallbackResp.ok) {
+        const data = await fallbackResp.json();
+        return res.json({ success: true, text: (data.text || '').trim() });
+      }
+
+      return res.status(500).json({ success: false, message: 'Transcription failed', details: errBody });
+    }
+  } catch (err) {
+    console.error('Transcription exception:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // List supported AI Models & status
 app.get('/api/ai/models', (req, res) => {
   const hasOpenAIKey = isRealKey(process.env.OPENAI_API_KEY);
-  const hasGeminiKey = isRealKey(process.env.GEMINI_API_KEY);
-  const hasGroqKey = isRealKey(process.env.GROQ_API_KEY);
+  const hasGeminiKey = isValidGeminiKey(process.env.GEMINI_API_KEY);
+  const hasGroqKey = isValidGroqKey(process.env.GROQ_API_KEY);
   const hasSarvamKey = isRealKey(process.env.SARVAM_API_KEY);
 
   res.json({
     success: true,
-    activeEngine: hasGeminiKey ? 'gemini-2.0-flash' : hasGroqKey ? 'groq-llama-3.3' : hasOpenAIKey ? 'gpt-6-astra' : hasSarvamKey ? 'sarvam-2b' : 'local-multilingual-agent',
+    activeEngine: hasGroqKey ? 'groq-llama-3.3' : hasGeminiKey ? 'gemini-2.0-flash' : hasOpenAIKey ? 'gpt-6-astra' : hasSarvamKey ? 'sarvam-2b' : 'local-multilingual-agent',
     models: [
+      {
+        id: 'groq-llama-3.3',
+        name: 'Groq Cloud Llama 3.3 (100% Free • 350 tok/sec Realtime)',
+        description: 'Free on Groq Console. World-record fastest conversational engine for real-time live calling & mobile voice',
+        available: hasGroqKey,
+        isDefault: true,
+        badge: 'FREE ULTRA-FAST'
+      },
       {
         id: 'gemini-2.0-flash',
         name: 'Google Gemini 2.0 Flash (100% Free • Realtime VLM & Voice)',
         description: 'Free on Google AI Studio. Ultra low-latency, real-time voice & photo scanning with native Hindi/Marathi support',
         available: hasGeminiKey,
-        isDefault: true,
+        isDefault: !hasGroqKey && hasGeminiKey,
         badge: 'FREE RECOMMENDED'
-      },
-      {
-        id: 'groq-llama-3.3',
-        name: 'Groq Cloud Llama 3.3 (100% Free • 350 tok/sec Realtime)',
-        description: 'Free on Groq Console. World-record fastest conversational engine for real-time live calling',
-        available: hasGroqKey,
-        isDefault: false,
-        badge: 'FREE ULTRA-FAST'
       },
       {
         id: 'gpt-6-astra',
@@ -805,7 +910,7 @@ app.get('/api/ai/models', (req, res) => {
 // AI Agent 1: Natural Language Requirement Matcher
 app.post('/api/ai/agent-match', async (req, res) => {
   try {
-    const { prompt = '', apiKey = '', openaiKey = '', groqKey = '', preferredModel = 'gemini-2.0-flash' } = req.body;
+    const { prompt = '', apiKey = '', openaiKey = '', groqKey = '', preferredModel = 'groq-llama-3.3' } = req.body;
     const text = prompt.toLowerCase();
 
     const detectedServices = [];
@@ -859,23 +964,26 @@ app.post('/api/ai/agent-match', async (req, res) => {
 
     let aiReasoning = `Maine Pune me aapke request (${detectedServices.join(' + ')}, ${bhk} BHK in ${targetArea}) ke liye ${topMatch?.maid.name} ko ${topMatch?.matchPercent}% compatibility ke sath match kiya hai. Yeh ${topMatch?.maid.location} me hain aur lagbhag ${topMatch?.maid.etaMins} minute me pahunch sakti hain!`;
 
-    // 1. Try Gemini
-    if (apiKey || process.env.GEMINI_API_KEY) {
-      const geminiResult = await callGeminiFlash(
-        `User wants a home maid in Pune: "${prompt}". Best match is ${topMatch?.maid.name} (${topMatch?.maid.location}). Summarize why in 2 warm sentences in conversational Hindi/Marathi.`,
-        'You are a smart domestic matching agent in Pune.',
-        apiKey,
-        preferredModel
-      );
-      if (geminiResult && geminiResult.text) aiReasoning = geminiResult.text;
-    } else if (groqKey || process.env.GROQ_API_KEY) {
+    // 1. Try Groq First for instant speed
+    const effectiveGroq = (groqKey || process.env.GROQ_API_KEY || '').trim();
+    const effectiveGemini = (apiKey || process.env.GEMINI_API_KEY || '').trim();
+
+    if (isValidGroqKey(effectiveGroq)) {
       const groqResult = await callGroqFast(
         `User wants a home maid in Pune: "${prompt}". Best match is ${topMatch?.maid.name} (${topMatch?.maid.location}). Summarize why in 2 warm sentences in conversational Hindi/Marathi.`,
         'You are a smart domestic matching agent in Pune.',
-        groqKey,
+        effectiveGroq,
         preferredModel
       );
       if (groqResult && groqResult.text) aiReasoning = groqResult.text;
+    } else if (isValidGeminiKey(effectiveGemini)) {
+      const geminiResult = await callGeminiFlash(
+        `User wants a home maid in Pune: "${prompt}". Best match is ${topMatch?.maid.name} (${topMatch?.maid.location}). Summarize why in 2 warm sentences in conversational Hindi/Marathi.`,
+        'You are a smart domestic matching agent in Pune.',
+        effectiveGemini,
+        preferredModel
+      );
+      if (geminiResult && geminiResult.text) aiReasoning = geminiResult.text;
     } else if (openaiKey || process.env.OPENAI_API_KEY) {
       const gptResult = await callOpenAIAstra(
         `User wants a home maid in Pune: "${prompt}". Best match is ${topMatch?.maid.name} (${topMatch?.maid.location}). Summarize why in 2 warm sentences in conversational Hindi/Marathi.`,
@@ -916,7 +1024,7 @@ app.post('/api/ai/call-voice-reply', async (req, res) => {
     openaiKey = '', 
     groqKey = '', 
     sarvamKey = '', 
-    preferredModel = 'gemini-2.0-flash' 
+    preferredModel = 'groq-llama-3.3' 
   } = req.body;
 
   const msg = userMessage.toLowerCase().trim();
@@ -941,25 +1049,25 @@ Your traits:
     ? `Customer says over call: "${userMessage}". Answer directly in spoken Hindi:` 
     : `The call just connected. Greet the customer warmly and ask what domestic help they need today.`;
 
-  const rawGemini = (geminiKey || apiKey || process.env.GEMINI_API_KEY || '').trim();
   const rawGroq = (groqKey || process.env.GROQ_API_KEY || '').trim();
+  const rawGemini = (geminiKey || apiKey || process.env.GEMINI_API_KEY || '').trim();
   const rawOpenAi = (openaiKey || process.env.OPENAI_API_KEY || '').trim();
   const rawSarvam = (sarvamKey || process.env.SARVAM_API_KEY || '').trim();
 
-  const effectiveGeminiKey = isRealKey(rawGemini) ? rawGemini : '';
-  const effectiveGroqKey = isRealKey(rawGroq) ? rawGroq : '';
+  const effectiveGroqKey = isValidGroqKey(rawGroq) ? rawGroq : '';
+  const effectiveGeminiKey = isValidGeminiKey(rawGemini) ? rawGemini : '';
   const effectiveOpenAiKey = isRealKey(rawOpenAi) ? rawOpenAi : '';
   const effectiveSarvamKey = isRealKey(rawSarvam) ? rawSarvam : '';
 
-  console.log(`📞 [Call Incoming] User: "${userMessage}" | Preferred: ${preferredModel} | Keys: Gemini:${!!effectiveGeminiKey}, Groq:${!!effectiveGroqKey}, OpenAI:${!!effectiveOpenAiKey}`);
+  console.log(`📞 [Call Incoming] User: "${userMessage}" | Preferred: ${preferredModel} | Keys: Groq:${!!effectiveGroqKey}, Gemini:${!!effectiveGeminiKey}, OpenAI:${!!effectiveOpenAiKey}`);
 
   let aiResult = null;
 
-  // 1. Prioritize according to user's selected model
-  if (preferredModel.includes('gemini') && effectiveGeminiKey) {
-    aiResult = await callGeminiFlash(userQuery, systemPrompt, effectiveGeminiKey, preferredModel);
-  } else if ((preferredModel.includes('groq') || preferredModel.includes('llama')) && effectiveGroqKey) {
+  // 1. Prioritize according to user's selected model or Groq default
+  if ((preferredModel.includes('groq') || preferredModel.includes('llama')) && effectiveGroqKey) {
     aiResult = await callGroqFast(userQuery, systemPrompt, effectiveGroqKey, preferredModel);
+  } else if (preferredModel.includes('gemini') && effectiveGeminiKey) {
+    aiResult = await callGeminiFlash(userQuery, systemPrompt, effectiveGeminiKey, preferredModel);
   } else if ((preferredModel.includes('gpt') || preferredModel.includes('astra')) && effectiveOpenAiKey) {
     aiResult = await callOpenAIAstra(userQuery, systemPrompt, effectiveOpenAiKey, preferredModel);
   } else if (preferredModel.includes('sarvam') && effectiveSarvamKey) {
@@ -967,11 +1075,11 @@ Your traits:
   }
 
   // 2. Failover to other available keys if preferred was not available or failed
-  if (!aiResult && effectiveGeminiKey) {
-    aiResult = await callGeminiFlash(userQuery, systemPrompt, effectiveGeminiKey, 'gemini-2.0-flash');
-  }
   if (!aiResult && effectiveGroqKey) {
     aiResult = await callGroqFast(userQuery, systemPrompt, effectiveGroqKey, 'llama-3.3-70b-versatile');
+  }
+  if (!aiResult && effectiveGeminiKey) {
+    aiResult = await callGeminiFlash(userQuery, systemPrompt, effectiveGeminiKey, 'gemini-2.0-flash');
   }
   if (!aiResult && effectiveOpenAiKey) {
     aiResult = await callOpenAIAstra(userQuery, systemPrompt, effectiveOpenAiKey, 'gpt-4o-mini');

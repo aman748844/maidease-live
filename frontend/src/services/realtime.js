@@ -1,3 +1,5 @@
+import { API_BASE } from './api';
+
 // Real-Time Event Bus using native Server-Sent Events (SSE) + Web Audio alerts
 class RealtimeService {
   constructor() {
@@ -11,7 +13,7 @@ class RealtimeService {
     if (this.eventSource) return;
 
     try {
-      this.eventSource = new EventSource('/api/realtime/stream');
+      this.eventSource = new EventSource(`${API_BASE}/realtime/stream`);
 
       this.eventSource.onopen = () => {
         this.isConnected = true;
@@ -123,7 +125,7 @@ class RealtimeService {
 
   async emit(event, data) {
     try {
-      await fetch('/api/realtime/emit', {
+      await fetch(`${API_BASE}/realtime/emit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ event, data })

@@ -1,4 +1,4 @@
-const API_BASE = '/api';
+export const API_BASE = (import.meta.env?.VITE_API_BASE || '').replace(/\/$/, '') || '/api';
 
 export const api = {
   // Fetch all maids with optional filters
@@ -162,6 +162,17 @@ export const api = {
       body: JSON.stringify(data)
     });
     if (!res.ok) throw new Error('Failed to fetch instant quote');
+    return res.json();
+  },
+
+  // AI Agent: Voice-to-Text Transcription via Groq Whisper API (Mobile & Desktop Compatible)
+  async transcribeAudio(data) {
+    const res = await fetch(`${API_BASE}/ai/transcribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Failed to transcribe audio via Groq Whisper');
     return res.json();
   }
 };

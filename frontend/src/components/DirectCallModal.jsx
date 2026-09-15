@@ -39,7 +39,7 @@ export default function DirectCallModal() {
 
   // AI Model Selection & Keys
   const [selectedAiModel, setSelectedAiModel] = useState(
-    () => localStorage.getItem('maidease_ai_model') || 'gemini-2.0-flash'
+    () => localStorage.getItem('maidease_ai_model') || 'groq-llama-3.3'
   );
   const [customOpenAiKey, setCustomOpenAiKey] = useState(
     () => localStorage.getItem('maidease_openai_key') || ''
@@ -54,7 +54,8 @@ export default function DirectCallModal() {
     () => localStorage.getItem('maidease_sarvam_key') || ''
   );
   const [showModelConfig, setShowModelConfig] = useState(false);
-  const [activeEngineBadge, setActiveEngineBadge] = useState('Gemini 2.0 Flash');
+  const [activeEngineBadge, setActiveEngineBadge] = useState('Groq Llama 3.3 (100% Free)');
+  const [isTranscribing, setIsTranscribing] = useState(false);
 
   // Real Mobile Number for Phone Testing
   const [testMobileNumber, setTestMobileNumber] = useState(userPhoneNumber || '');
@@ -68,6 +69,10 @@ export default function DirectCallModal() {
   const activeCallIdRef = useRef(null);
   const transcriptEndRef = useRef(null);
   const handleSendVoiceQueryRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
+  const streamRef = useRef(null);
+  const recordingTimerRef = useRef(null);
 
   const maid = selectedMaidForCall;
 
@@ -452,28 +457,135 @@ export default function DirectCallModal() {
     handleSendVoiceQueryRef.current = handleSendVoiceQuery;
   });
 
-  // Mic toggle for speaking
-  const toggleMicListening = () => {
-    if (!recognitionRef.current) {
-      showToast('Microphone not supported in this browser. You can type in the box below!', 'info');
-      return;
-    }
-
-    if (isListeningUser) {
-      recognitionRef.current.stop();
-      setIsListeningUser(false);
-    } else {
+  // Stop recording cleanly
+  const stopMediaRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       try {
-        // Stop speech synthesizer if maid was speaking so user can speak
-        if (synthRef.current) synthRef.current.cancel();
-        setMaidSpeaking(false);
+        mediaRecorderRef.current.stop();
+      } catch (e) {}
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+    clearTimeout(recordingTimerRef.current);
+    setIsListeningUser(false);
+  };
 
-        recognitionRef.current.start();
-        setIsListeningUser(true);
-        showToast('Listening... Speak now in Hindi, Marathi, or English', 'info');
-      } catch (e) {
-        recognitionRef.current.stop();
-        setIsListeningUser(false);
+  // Start Mobile & Desktop audio capture for Groq Whisper transcription
+  const startMediaRecording = async () => {
+    try {
+      if (synthRef.current) synthRef.current.cancel();
+      setMaidSpeaking(false);
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+
+      let mimeType = 'audio/webm';
+      if (typeof MediaRecorder !== 'undefined') {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) mimeType = 'audio/webm;codecs=opus';
+        else if (MediaRecorder.isTypeSupported('audio/mp4')) mimeType = 'audio/mp4';
+        else if (MediaRecorder.isTypeSupported('audio/ogg')) mimeType = 'audio/ogg';
+      }
+
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.onstop = async () => {
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(t => t.stop());
+          streamRef.current = null;
+        }
+
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+        if (audioBlob.size < 400) {
+          setIsListeningUser(false);
+          return;
+        }
+
+        setIsTranscribing(true);
+        showToast('🎙️ Groq Whisper is transcribing your voice...', 'info');
+
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = async () => {
+          const base64Audio = reader.result;
+          try {
+            const res = await api.transcribeAudio({
+              audio: base64Audio,
+              mimeType,
+              groqKey: customGroqKey || localStorage.getItem('maidease_groq_key') || ''
+            });
+
+            if (res && res.success && res.text) {
+              const spoken = res.text.trim();
+              setUserSpokenText(spoken);
+              if (handleSendVoiceQueryRef.current) {
+                handleSendVoiceQueryRef.current(spoken);
+              }
+            } else {
+              showToast('Could not detect speech clearly. Please try speaking again or type.', 'info');
+            }
+          } catch (err) {
+            console.error('Groq Whisper transcribe error:', err);
+            showToast('Voice transcription failed. You can type in the box below!', 'error');
+          } finally {
+            setIsTranscribing(false);
+            setIsListeningUser(false);
+          }
+        };
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsListeningUser(true);
+      showToast('🎤 Listening via Groq Whisper... Speak now, then tap mic again to send!', 'info');
+
+      // Auto-stop after 8 seconds if user forgets to toggle
+      clearTimeout(recordingTimerRef.current);
+      recordingTimerRef.current = setTimeout(() => {
+        stopMediaRecording();
+      }, 8000);
+
+    } catch (err) {
+      console.warn('getUserMedia error:', err);
+      setIsListeningUser(false);
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        showToast('Mic permission blocked. Please allow Microphone access in your browser.', 'error');
+      } else {
+        showToast(`Mic not accessible: ${err.message || 'Check browser permissions'}`, 'error');
+      }
+    }
+  };
+
+  // Mic toggle for speaking (100% Mobile & Desktop Compatible)
+  const toggleMicListening = () => {
+    if (isListeningUser) {
+      stopMediaRecording();
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
+      }
+    } else {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        startMediaRecording();
+      } else if (recognitionRef.current) {
+        try {
+          if (synthRef.current) synthRef.current.cancel();
+          setMaidSpeaking(false);
+          recognitionRef.current.start();
+          setIsListeningUser(true);
+          showToast('Listening... Speak now in Hindi, Marathi, or English', 'info');
+        } catch (e) {
+          showToast('Could not start speech recognition. Please type below.', 'info');
+        }
+      } else {
+        showToast('Microphone not supported in this browser. You can type in the box below!', 'info');
       }
     }
   };
@@ -1036,13 +1148,15 @@ export default function DirectCallModal() {
             <button
               onClick={toggleMicListening}
               className={`p-3 rounded-2xl border transition flex items-center justify-center ${
-                isListeningUser
+                isTranscribing
+                  ? 'bg-amber-600 text-white animate-pulse border-amber-400 shadow-lg shadow-amber-500/40'
+                  : isListeningUser
                   ? 'bg-purple-600 text-white animate-pulse border-purple-400 shadow-lg shadow-purple-500/40'
                   : 'bg-slate-800 border-slate-700 text-slate-300 hover:text-white'
               }`}
-              title={isListeningUser ? 'Listening... click to stop' : 'Tap to speak to helper'}
+              title={isTranscribing ? 'Transcribing speech with Groq Whisper...' : isListeningUser ? 'Listening... tap to send voice' : 'Tap to speak to helper'}
             >
-              {isListeningUser ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
+              {isTranscribing ? <RefreshCw className="w-5 h-5 animate-spin text-amber-200" /> : isListeningUser ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
             </button>
 
             {/* End Call Button */}

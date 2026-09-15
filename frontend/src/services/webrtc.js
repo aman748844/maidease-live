@@ -1,5 +1,6 @@
 // Real-Time WebRTC Peer-to-Peer Audio Call Service (Urban Company / Uber style)
 import { realtime } from './realtime';
+import { API_BASE } from './api';
 
 class WebRTCService {
   constructor() {
@@ -86,7 +87,7 @@ class WebRTCService {
     const pc = this.createPeerConnection(callId);
 
     // Alert server & maid of outgoing call
-    await fetch('/api/webrtc/call-maid', {
+    await fetch(`${API_BASE}/webrtc/call-maid`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ callId, maidId, customerName })
@@ -102,7 +103,7 @@ class WebRTCService {
     await this.getLocalMicrophoneStream();
     const pc = this.createPeerConnection(callId);
 
-    await fetch('/api/webrtc/answer-call', {
+    await fetch(`${API_BASE}/webrtc/answer-call`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ callId })
@@ -130,7 +131,7 @@ class WebRTCService {
 
   async sendSignalToServer(callId, type, signal) {
     try {
-      await fetch('/api/webrtc/signal', {
+      await fetch(`${API_BASE}/webrtc/signal`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ callId, type, signal })
@@ -151,7 +152,7 @@ class WebRTCService {
   endCall(callId) {
     const id = callId || this.activeCallId;
     if (id) {
-      fetch('/api/webrtc/end-call', {
+      fetch(`${API_BASE}/webrtc/end-call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ callId: id })
